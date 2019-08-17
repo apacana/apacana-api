@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/apacana/apacana-api/biz/handler/hotel"
+	"github.com/apacana/apacana-api/biz/handler/stroke"
 	"github.com/apacana/apacana-api/biz/handler/user"
 	"github.com/apacana/apacana-api/biz/middleware"
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,10 @@ func SetupRouter(r *gin.Engine) {
 			{
 				ApiHotelAgoda.POST("/get/", hotel.GetAgodaHotel)
 			}
+		}
+		ApiStroke := Api.Group("/stroke/")
+		{
+			ApiStroke.POST("create", stroke.CreateStroke)
 		}
 	}
 }

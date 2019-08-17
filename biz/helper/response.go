@@ -17,10 +17,14 @@ func UpdateReportStatus(c *gin.Context, httpCode int, bizCode int32) {
 
 func NewGinResponse(code int32, result interface{}) *GinResponse {
 	msg := "Success"
-	if code == 1 {
+	if code == CodeFailed {
 		msg = "Failed"
-	} else if code == 4 {
+	} else if code == CodeForbidden {
 		msg = "Forbidden"
+	} else if code == CodeParmErr {
+		msg = "ParmErr"
+	} else if code == CodeStrokeOutOfLimit {
+		msg = "StrokeOutOfLimit"
 	}
 	return &GinResponse{
 		Code:    code,

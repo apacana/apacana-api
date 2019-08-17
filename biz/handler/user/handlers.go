@@ -13,7 +13,7 @@ func CreateTourist(c *gin.Context) {
 	var createTouristForm CreateTouristForm
 	if err := c.ShouldBindJSON(&createTouristForm); err != nil {
 		helper.FormatLogPrint(helper.WARNING, "CreateTourist bind json failed, err: %v", err)
-		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
 	helper.FormatLogPrint(helper.LOG, "CreateTourist from: %+v", createTouristForm)
@@ -27,23 +27,52 @@ func CreateTourist(c *gin.Context) {
 }
 
 func GetUserInfo(c *gin.Context) {
-	touristData := map[string]interface{}{
-		"is_tourist": true,
-	}
 	userToken := c.GetString(helper.UserToken)
 	helper.FormatLogPrint(helper.LOG, "GetUserInfo userToken: %+v", userToken)
 	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, touristData)
+			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+				"is_tourist": true,
+			})
 			return
 		}
 		helper.FormatLogPrint(helper.ERROR, "GetUserInfo GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
+
+	strokeList := &helper.StrokeList{
+		StrokeList: make([]int64, 0),
+	}
+	if len(userInfo.Strokes) != 0 {
+		strokeList = helper.StringToStrokeList(userInfo.Strokes)
+		if strokeList == nil {
+			helper.FormatLogPrint(helper.ERROR, "GetUserInfo StringToStrokeList failed, strokes: %v", userInfo.Strokes)
+			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+			return
+		}
+	}
+
+	strokeInfos, err := mysql.MGetStrokeByID(c, nil, strokeList.StrokeList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	strokeInfoList := make([]map[string]interface{}, 0)
+	for _, strokeInfo := range strokeInfos {
+		strokeInfoList = append(strokeInfoList, map[string]interface{}{
+			"stroke_token": strokeInfo.StrokeToken,
+			"stroke_name":  strokeInfo.StrokeName,
+		})
+	}
+
 	if userInfo.Status == 0 {
-		helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, touristData)
+		helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+			"is_tourist":  true,
+			"stroke_list": strokeInfoList,
+		})
 		return
 	}
 	newSession := helper.SetCookie(userToken, helper.SessionSalt)
@@ -55,6 +84,7 @@ func GetUserInfo(c *gin.Context) {
 			"status":              userInfo.Status,
 			helper.ApacanaSession: newSession,
 		},
+		"stroke_list": strokeInfoList,
 	})
 }
 
@@ -62,11 +92,12 @@ func RegisterUser(c *gin.Context) {
 	var registerUserForm RegisterUserForm
 	if err := c.ShouldBindJSON(&registerUserForm); err != nil {
 		helper.FormatLogPrint(helper.WARNING, "RegisterUser bind json failed, err: %v", err)
-		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
-	if len(registerUserForm.PassWord) < 8 {
-		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+	if len(registerUserForm.PassWord) < 8 || len(registerUserForm.UserName) < 4 ||
+		len(registerUserForm.UserName) > 16 || len(registerUserForm.Name) == 0 {
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
 	helper.FormatLogPrint(helper.LOG, "RegisterUser from: %+v", registerUserForm)
@@ -78,7 +109,7 @@ func RegisterUser(c *gin.Context) {
 			// insert
 			nowTime := time.Now().Format("2006-01-02 15:04:05")
 			passWord := helper.Md5(registerUserForm.PassWord)
-			err := mysql.InsertUserInfo(c, nil, &mysql.UserInfo{
+			err := mysql.InsertUserInfo(c, &mysql.UserInfo{
 				Token:      userToken,
 				UserName:   registerUserForm.UserName,
 				PassWord:   passWord,
@@ -141,7 +172,7 @@ func LoginUser(c *gin.Context) {
 	var loginUserForm LoginUserForm
 	if err := c.ShouldBindJSON(&loginUserForm); err != nil {
 		helper.FormatLogPrint(helper.WARNING, "LoginUser bind json failed, err: %v", err)
-		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
 	helper.FormatLogPrint(helper.LOG, "LoginUser from: %+v", loginUserForm)
@@ -156,9 +187,15 @@ func LoginUser(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
+	strokeStr := userInfo.Strokes
 
 	touristToken := c.GetString(helper.UserToken)
 	if userInfo.Token == touristToken {
+		strokeInfoList, err := helper.CreateFmtStrokeList(c, strokeStr)
+		if err != nil {
+			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+			return
+		}
 		newSession := helper.SetCookie(userInfo.Token, helper.SessionSalt)
 		helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 			"user_info": map[string]interface{}{
@@ -166,6 +203,7 @@ func LoginUser(c *gin.Context) {
 				"token":               userInfo.Token,
 				"status":              helper.LoginUserStatus,
 				helper.ApacanaSession: newSession,
+				"stroke_list":         strokeInfoList,
 			},
 		})
 		return
@@ -177,8 +215,23 @@ func LoginUser(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
+
 	if touristInfo != nil {
-		// TODO: 数据转移
+		newStrokeStr, err := userStrokeTrans(c, touristInfo, userInfo)
+		if err != nil {
+			if err == helper.ErrStrokeOutOfLimit {
+				helper.BizResponse(c, http.StatusOK, helper.CodeStrokeOutOfLimit, nil)
+				return
+			}
+			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+			return
+		}
+		strokeStr = newStrokeStr
+	}
+	strokeInfoList, err := helper.CreateFmtStrokeList(c, strokeStr)
+	if err != nil {
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
 	}
 
 	newSession := helper.SetCookie(userInfo.Token, helper.SessionSalt)
@@ -189,5 +242,6 @@ func LoginUser(c *gin.Context) {
 			"status":              helper.LoginUserStatus,
 			helper.ApacanaSession: newSession,
 		},
+		"stroke_list": strokeInfoList,
 	})
 }

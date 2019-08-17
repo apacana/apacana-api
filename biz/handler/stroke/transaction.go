@@ -1,0 +1,54 @@
+package stroke
+
+import (
+	"github.com/apacana/apacana-api/biz/dal/mysql"
+	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/gin-gonic/gin"
+	"time"
+)
+
+func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *helper.StrokeList, strokeName string) (strokeToken string, err error) {
+	tx := mysql.DB.Begin()
+	defer func() {
+		if err == nil {
+			err = tx.Commit().Error
+		}
+		if err != nil {
+			if r := tx.Rollback(); r.Error != nil {
+				helper.FormatLogPrint(helper.ERROR, "createUserStroke failed, err: %v", err)
+			}
+		}
+	}()
+
+	// create stroke
+	nowTime := time.Now().Format("2006-01-02 15:04:05")
+	strokeToken = helper.GenerateToken([]byte{'s', 't', 'r', 'o', 'k', 'e'}, "")
+	err = mysql.InsertStrokeInfo(c, tx, &mysql.StrokeInfo{
+		StrokeToken: strokeToken,
+		StrokeName:  strokeName,
+		OwnerID:     userInfo.ID,
+		CreateTime:  nowTime,
+		UpdateTime:  nowTime,
+	})
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "createUserStroke InsertStrokeInfo failed, err: %v", err)
+		return
+	}
+	strokeInfo, err := mysql.GetStrokeByToken(c, tx, strokeToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "createUserStroke GetStrokeByToken failed, err: %v, strokeToken: %v", err, strokeToken)
+		return
+	}
+
+	// update user
+	strokeList.StrokeList = append(strokeList.StrokeList, strokeInfo.ID)
+	err = mysql.UpdateUserInfo(c, tx, userInfo.ID, map[string]interface{}{
+		"strokes": *helper.PackStrokeList(strokeList),
+	})
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "createUserStroke UpdateUserInfo failed, err: %v, userID: %d", err, userInfo.ID)
+		return
+	}
+
+	return
+}

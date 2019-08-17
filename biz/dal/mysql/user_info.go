@@ -11,6 +11,7 @@ type UserInfo struct {
 	UserName   string `gorm:"user_name" json:"user_name"`
 	PassWord   string `gorm:"pass_word" json:"pass_word"`
 	Name       string `gorm:"name" json:"name"`
+	Strokes    string `gorm:"strokes" json:"strokes"`
 	Status     uint8  `gorm:"status" json:"status"`
 	CreateTime string `gorm:"create_time" json:"create_time"`
 	UpdateTime string `gorm:"update_time" json:"update_time"`
@@ -26,10 +27,10 @@ func (a *UserInfo) TableName() string {
 
 func GetUserInfoByToken(c *gin.Context, tx *gorm.DB, token string) (*UserInfo, error) {
 	if tx == nil {
-		tx = DB.Model(&UserInfo{})
+		tx = DB
 	}
 	var ref = &UserInfo{}
-	r := tx.Where("token = ?", token).First(&ref)
+	r := tx.Model(&UserInfo{}).Where("token = ?", token).First(&ref)
 	if r.Error != nil {
 		return nil, r.Error
 	}
@@ -38,10 +39,10 @@ func GetUserInfoByToken(c *gin.Context, tx *gorm.DB, token string) (*UserInfo, e
 
 func GetUserByUserPassWord(c *gin.Context, tx *gorm.DB, userName string, passWord string) (*UserInfo, error) {
 	if tx == nil {
-		tx = DB.Model(&UserInfo{})
+		tx = DB
 	}
 	var ref = &UserInfo{}
-	r := tx.Where("user_name = ? AND pass_word = ?", userName, passWord).First(&ref)
+	r := tx.Model(&UserInfo{}).Where("user_name = ? AND pass_word = ?", userName, passWord).First(&ref)
 	if r.Error != nil {
 		return nil, r.Error
 	}
@@ -50,12 +51,12 @@ func GetUserByUserPassWord(c *gin.Context, tx *gorm.DB, userName string, passWor
 
 func UpdateUserInfo(c *gin.Context, tx *gorm.DB, id int64, attrs map[string]interface{}) error {
 	if tx == nil {
-		tx = DB.Model(&UserInfo{})
+		tx = DB
 	}
-	r := tx.Where("id = ?", id).Update(attrs)
+	r := tx.Model(&UserInfo{}).Where("id = ?", id).Update(attrs)
 	return r.Error
 }
 
-func InsertUserInfo(c *gin.Context, tx *gorm.DB, userInfo *UserInfo) error {
-	return Insert(userInfo)
+func InsertUserInfo(c *gin.Context, userInfo *UserInfo) error {
+	return Insert(nil, userInfo)
 }

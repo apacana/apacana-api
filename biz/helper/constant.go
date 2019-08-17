@@ -1,5 +1,7 @@
 package helper
 
+import "errors"
+
 const YearTime = 31536000
 const SessionSalt = "saltjKNlvO8ybWIqkuZCCi1jgd"
 
@@ -17,12 +19,24 @@ const (
 )
 
 const (
-	CodeSuccess   = int32(0)
-	CodeFailed    = int32(1)
-	CodeForbidden = int32(4)
+	CodeSuccess          = int32(0)
+	CodeFailed           = int32(1)
+	CodeParmErr          = int32(2)
+	CodeStrokeOutOfLimit = int32(3)
+	CodeForbidden        = int32(4)
 )
 
 const (
-	TouristStatus   = uint8(0)
-	LoginUserStatus = uint8(1)
+	TouristStatus     = uint8(0)
+	LoginUserStatus   = uint8(1)
+	TransferredStatus = uint8(9)
+)
+
+const (
+	StrokeNormalStatus = uint8(0)
+	StrokeDeleteStatus = uint8(1)
+)
+
+var (
+	ErrStrokeOutOfLimit = errors.New("ErrStrokeOutOfLimit")
 )

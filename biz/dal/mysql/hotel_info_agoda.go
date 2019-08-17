@@ -58,10 +58,10 @@ func (a *HotelInfoAgoda) TableName() string {
 
 func MGetHotelInfoAgodaByHotelID(c *gin.Context, tx *gorm.DB, hotelIDs []int64) ([]*HotelInfoAgoda, error) {
 	if tx == nil {
-		tx = DB.Model(&HotelInfoAgoda{})
+		tx = DB
 	}
 	var ref []*HotelInfoAgoda
-	r := tx.Where("hotel_id in (?)", hotelIDs).Find(&ref)
+	r := tx.Model(&HotelInfoAgoda{}).Where("hotel_id in (?)", hotelIDs).Find(&ref)
 	if r.Error != nil {
 		return nil, r.Error
 	}

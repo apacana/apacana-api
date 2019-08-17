@@ -22,8 +22,12 @@ func InitMysql() {
 	log.Println("connect database success")
 }
 
-func Insert(data interface{}) error {
-	if err := DB.Create(data).Error; err != nil {
+func Insert(tx *gorm.DB, data interface{}) error {
+	if tx == nil {
+		tx = DB
+	}
+
+	if err := tx.Create(data).Error; err != nil {
 		_, _ = fmt.Fprintf(gin.DefaultWriter, "insert mysql error: %s\n", err)
 		return err
 	}

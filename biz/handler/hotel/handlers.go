@@ -12,7 +12,7 @@ func GetAgodaHotel(c *gin.Context) {
 	var getAgodaHotelForm GetAgodaHotelForm
 	if err := c.ShouldBindJSON(&getAgodaHotelForm); err != nil {
 		helper.FormatLogPrint(helper.WARNING, "GetAgodaHotel bind json failed, err: %v", err)
-		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
 	helper.FormatLogPrint(helper.LOG, "GetAgodaHotel from: %+v", getAgodaHotelForm)

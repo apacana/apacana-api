@@ -293,7 +293,7 @@ func insertHotelInfoAgoda(filePath string) {
 
 		fmt.Println("index:", index)
 		//fmt.Printf("\r\n %+v", *hotelInfoAgoda)
-		err = mysql.Insert(hotelInfoAgoda)
+		err = mysql.Insert(nil, hotelInfoAgoda)
 		if err != nil {
 			fmt.Println(err)
 		}

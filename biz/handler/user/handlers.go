@@ -42,30 +42,11 @@ func GetUserInfo(c *gin.Context) {
 		return
 	}
 
-	strokeList := &helper.StrokeList{
-		StrokeList: make([]int64, 0),
-	}
-	if len(userInfo.Strokes) != 0 {
-		strokeList = helper.StringToStrokeList(userInfo.Strokes)
-		if strokeList == nil {
-			helper.FormatLogPrint(helper.ERROR, "GetUserInfo StringToStrokeList failed, strokes: %v", userInfo.Strokes)
-			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
-			return
-		}
-	}
-
-	strokeInfos, err := mysql.MGetStrokeByID(c, nil, strokeList.StrokeList)
+	strokeInfoList, err := helper.CreateFmtStrokeList(c, userInfo.Strokes)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
+		helper.FormatLogPrint(helper.ERROR, "GetUserInfo CreateFmtStrokeList failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
-	}
-	strokeInfoList := make([]map[string]interface{}, 0)
-	for _, strokeInfo := range strokeInfos {
-		strokeInfoList = append(strokeInfoList, map[string]interface{}{
-			"stroke_token": strokeInfo.StrokeToken,
-			"stroke_name":  strokeInfo.StrokeName,
-		})
 	}
 
 	if userInfo.Status == 0 {
@@ -184,6 +165,7 @@ func LoginUser(c *gin.Context) {
 		return
 	}
 	if userInfo == nil || userInfo.Status == helper.TouristStatus {
+		helper.FormatLogPrint(helper.WARNING, "LoginUser status not 0")
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
@@ -193,6 +175,7 @@ func LoginUser(c *gin.Context) {
 	if userInfo.Token == touristToken {
 		strokeInfoList, err := helper.CreateFmtStrokeList(c, strokeStr)
 		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "LoginUser CreateFmtStrokeList failed, err: %v", err)
 			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 			return
 		}
@@ -219,6 +202,7 @@ func LoginUser(c *gin.Context) {
 	if touristInfo != nil {
 		newStrokeStr, err := userStrokeTrans(c, touristInfo, userInfo)
 		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "LoginUser userStrokeTrans failed, err: %v", err)
 			if err == helper.ErrStrokeOutOfLimit {
 				helper.BizResponse(c, http.StatusOK, helper.CodeStrokeOutOfLimit, nil)
 				return
@@ -230,6 +214,7 @@ func LoginUser(c *gin.Context) {
 	}
 	strokeInfoList, err := helper.CreateFmtStrokeList(c, strokeStr)
 	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "LoginUser CreateFmtStrokeList failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/apacana/apacana-api/biz/handler/hotel"
+	"github.com/apacana/apacana-api/biz/handler/route"
 	"github.com/apacana/apacana-api/biz/handler/stroke"
 	"github.com/apacana/apacana-api/biz/handler/user"
 	"github.com/apacana/apacana-api/biz/middleware"
@@ -29,6 +30,10 @@ func SetupRouter(r *gin.Engine) {
 		ApiStroke := Api.Group("/stroke/")
 		{
 			ApiStroke.POST("create", stroke.CreateStroke)
+		}
+		ApiRoute := Api.Group("/route/")
+		{
+			ApiRoute.POST("create", route.CreateRoute)
 		}
 	}
 }

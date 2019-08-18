@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"net/http"
@@ -44,7 +45,7 @@ func GetUserInfo(c *gin.Context) {
 		return
 	}
 
-	strokeInfoList, err := helper.CreateFmtStrokeList(c, userInfo.Strokes)
+	strokeInfoList, err := transform.CreateFmtStrokeList(c, userInfo.Strokes)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "GetUserInfo CreateFmtStrokeList failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
@@ -169,7 +170,7 @@ func LoginUser(c *gin.Context) {
 
 	touristToken := c.GetString(helper.UserToken)
 	if userInfo.Token == touristToken {
-		strokeInfoList, err := helper.CreateFmtStrokeList(c, strokeStr)
+		strokeInfoList, err := transform.CreateFmtStrokeList(c, strokeStr)
 		if err != nil {
 			helper.FormatLogPrint(helper.ERROR, "LoginUser CreateFmtStrokeList failed, err: %v", err)
 			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
@@ -206,7 +207,7 @@ func LoginUser(c *gin.Context) {
 		}
 		strokeStr = newStrokeStr
 	}
-	strokeInfoList, err := helper.CreateFmtStrokeList(c, strokeStr)
+	strokeInfoList, err := transform.CreateFmtStrokeList(c, strokeStr)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "LoginUser CreateFmtStrokeList failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)

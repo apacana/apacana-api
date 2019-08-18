@@ -25,11 +25,14 @@ const (
 	CodeStrokeOutOfLimit = int32(3)
 	CodeForbidden        = int32(4)
 	CodeInvalidUser      = int32(5)
+	CodeMountDeleted     = int32(6)
+	CodeRouteOutOfLimit  = int32(7)
 )
 
 const (
 	TouristStatus     = uint8(0)
 	LoginUserStatus   = uint8(1)
+	DeleteFlagStatus  = uint8(8)
 	TransferredStatus = uint8(9)
 )
 

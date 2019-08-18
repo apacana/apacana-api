@@ -4,6 +4,7 @@ import (
 	"github.com/apacana/apacana-api/biz/config"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,12 +21,12 @@ func userStrokeTrans(c *gin.Context, touristInfo *mysql.UserInfo, userInfo *mysq
 		}
 	}()
 
-	touristStrokeList, err := helper.StringToStrokeList(touristInfo.Strokes)
+	touristStrokeList, err := transform.StringToStrokeList(touristInfo.Strokes)
 	if err != nil {
 		return
 	}
 
-	userStrokeList, err := helper.StringToStrokeList(userInfo.Strokes)
+	userStrokeList, err := transform.StringToStrokeList(userInfo.Strokes)
 	if err != nil {
 		return
 	}
@@ -48,7 +49,7 @@ func userStrokeTrans(c *gin.Context, touristInfo *mysql.UserInfo, userInfo *mysq
 		userStrokeList.StrokeList = append(userStrokeList.StrokeList, touristStroke)
 	}
 
-	strokeStr = *helper.PackStrokeList(userStrokeList)
+	strokeStr = *transform.PackStrokeList(userStrokeList)
 	err = mysql.UpdateUserInfo(c, tx, userInfo.ID, map[string]interface{}{
 		"strokes": strokeStr,
 	})

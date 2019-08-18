@@ -1,9 +1,10 @@
-package helper
+package transform
 
 import (
 	"encoding/json"
 	"errors"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
+	"github.com/apacana/apacana-api/biz/helper"
 	"github.com/gin-gonic/gin"
 	"unsafe"
 )
@@ -36,13 +37,13 @@ func PackStrokeList(strikeList *StrokeList) *string {
 func CreateFmtStrokeList(c *gin.Context, strokeStr string) ([]map[string]interface{}, error) {
 	strokeList, err := StringToStrokeList(strokeStr)
 	if err != nil {
-		FormatLogPrint(ERROR, "GetUserInfo StringToStrokeList failed, strokes: %v", strokeStr)
+		helper.FormatLogPrint(helper.ERROR, "CreateFmtStrokeList StringToStrokeList failed, strokes: %v", strokeStr)
 		return nil, errors.New("StringToStrokeList failed")
 	}
 
 	strokeInfos, err := mysql.MGetStrokeByID(c, nil, strokeList.StrokeList)
 	if err != nil {
-		FormatLogPrint(ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
+		helper.FormatLogPrint(helper.ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
 		return nil, errors.New("MGetStrokeByID failed")
 	}
 	strokeInfoList := make([]map[string]interface{}, 0)

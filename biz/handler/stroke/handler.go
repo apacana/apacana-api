@@ -4,6 +4,7 @@ import (
 	"github.com/apacana/apacana-api/biz/config"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"net/http"
@@ -17,6 +18,7 @@ func CreateStroke(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
+	helper.FormatLogPrint(helper.LOG, "CreateStroke from: %+v", createStrokeForm)
 	userToken := c.GetString(helper.UserToken)
 	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
 	if err != nil {
@@ -55,7 +57,7 @@ func CreateStroke(c *gin.Context) {
 	}
 
 	// quota judge
-	strokeList, err := helper.StringToStrokeList(userInfo.Strokes)
+	strokeList, err := transform.StringToStrokeList(userInfo.Strokes)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateStroke StringToStrokeList failed, strokes: %v", userInfo.Strokes)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
@@ -67,10 +69,13 @@ func CreateStroke(c *gin.Context) {
 	}
 
 	// insert
-	strokeName, err := createUserStroke(c, userInfo, strokeList, createStrokeForm.StrokeName)
+	strokeToken, err := createUserStroke(c, userInfo, strokeList, createStrokeForm.StrokeName)
 	if err != nil {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
-	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{"stroke_name": strokeName})
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+		"stroke_name":  createStrokeForm.StrokeName,
+		"stroke_token": strokeToken,
+	})
 }

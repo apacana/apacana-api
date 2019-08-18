@@ -27,6 +27,10 @@ func NewGinResponse(code int32, result interface{}) *GinResponse {
 		msg = "StrokeOutOfLimit"
 	} else if code == CodeInvalidUser {
 		msg = "InvalidUser"
+	} else if code == CodeMountDeleted {
+		msg = "MountDeleted"
+	} else if code == CodeRouteOutOfLimit {
+		msg = "RouteOutOfLimit"
 	}
 	return &GinResponse{
 		Code:    code,

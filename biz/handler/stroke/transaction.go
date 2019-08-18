@@ -3,11 +3,12 @@ package stroke
 import (
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 	"time"
 )
 
-func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *helper.StrokeList, strokeName string) (strokeToken string, err error) {
+func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *transform.StrokeList, strokeName string) (strokeToken string, err error) {
 	tx := mysql.DB.Begin()
 	defer func() {
 		if err == nil {
@@ -43,7 +44,7 @@ func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *help
 	// update user
 	strokeList.StrokeList = append(strokeList.StrokeList, strokeInfo.ID)
 	err = mysql.UpdateUserInfo(c, tx, userInfo.ID, map[string]interface{}{
-		"strokes": *helper.PackStrokeList(strokeList),
+		"strokes": *transform.PackStrokeList(strokeList),
 	})
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "createUserStroke UpdateUserInfo failed, err: %v, userID: %d", err, userInfo.ID)

@@ -99,3 +99,33 @@ func FormatLogPrint(logType string, format string, a ...interface{}) {
 	log.Printf(printLog, a)
 	_, _ = fmt.Fprintf(gin.DefaultWriter, printLog, a)
 }
+
+func IsValidCookie(session string) (string, error) {
+	elements := strings.Split(session, "-")
+	if len(elements) != 4 {
+		return "", ErrInvaildCookie
+	}
+
+	key := fmt.Sprintf("%s%s%s%s", elements[0], elements[1], elements[2], SessionSalt)
+	cipherStr := Md5(key)
+
+	if cipherStr != elements[3] {
+		return "", ErrInvaildCookie
+	}
+	timeStamp, err := strconv.ParseInt(elements[1], 10, 64)
+	if err != nil {
+		return "", ErrInvaildCookie
+	}
+	if time.Now().Unix()-timeStamp > YearTime {
+		return "", ErrInvaildCookie
+	}
+	return elements[2], nil
+}
+
+func SetBrowserCookie(c *gin.Context, cookieName string, cookieValue string) {
+	// 设置浏览器cookie
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "localhost", false, true)
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "apacana.com", false, true)
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "www.apacana.com", false, true)
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "120.78.145.184", false, true)
+}

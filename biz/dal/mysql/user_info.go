@@ -42,7 +42,7 @@ func GetUserByUserPassWord(c *gin.Context, tx *gorm.DB, userName string, passWor
 		tx = DB
 	}
 	var ref = &UserInfo{}
-	r := tx.Model(&UserInfo{}).Where("user_name = ? AND pass_word = ?", userName, passWord).First(&ref)
+	r := tx.Model(&UserInfo{}).Where("user_name = ? AND pass_word = ? AND status = 1", userName, passWord).First(&ref)
 	if r.Error != nil {
 		return nil, r.Error
 	}

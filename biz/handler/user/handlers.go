@@ -9,21 +9,23 @@ import (
 	"time"
 )
 
-func CreateTourist(c *gin.Context) {
-	var createTouristForm CreateTouristForm
-	if err := c.ShouldBindJSON(&createTouristForm); err != nil {
-		helper.FormatLogPrint(helper.WARNING, "CreateTourist bind json failed, err: %v", err)
-		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
-		return
+func PrepareUser(c *gin.Context) {
+	// judge token
+	session, err := c.Cookie(helper.ApacanaSession)
+	token := helper.GenerateToken([]byte{'u', 's', 'e', 'r'}, "")
+	if err == nil {
+		userToken, err := helper.IsValidCookie(session)
+		if err != nil {
+			helper.FormatLogPrint(helper.WARNING, "PrepareUser IsValidCookie failed, err: %v", err)
+		} else {
+			token = userToken
+		}
 	}
-	helper.FormatLogPrint(helper.LOG, "CreateTourist from: %+v", createTouristForm)
 
-	token := helper.GenerateToken([]byte{'u', 's', 'e', 'r'}, createTouristForm.Key)
 	cookie := helper.SetCookie(token, helper.SessionSalt)
-
-	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-		helper.ApacanaSession: cookie,
-	})
+	helper.SetBrowserCookie(c, helper.ApacanaSession, cookie)
+	helper.FormatLogPrint(helper.LOG, "PrepareUser ApacanaSession success, cookie: %v", cookie)
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, nil)
 }
 
 func GetUserInfo(c *gin.Context) {
@@ -56,14 +58,12 @@ func GetUserInfo(c *gin.Context) {
 		})
 		return
 	}
-	newSession := helper.SetCookie(userToken, helper.SessionSalt)
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 		"is_tourist": false,
 		"user_info": map[string]interface{}{
-			"name":                userInfo.Name,
-			"token":               userInfo.Token,
-			"status":              userInfo.Status,
-			helper.ApacanaSession: newSession,
+			"name":   userInfo.Name,
+			"token":  userInfo.Token,
+			"status": userInfo.Status,
 		},
 		"stroke_list": strokeInfoList,
 	})
@@ -77,7 +77,7 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 	if len(registerUserForm.PassWord) < 8 || len(registerUserForm.UserName) < 4 ||
-		len(registerUserForm.UserName) > 16 || len(registerUserForm.Name) == 0 {
+		len(registerUserForm.UserName) > 16 || len(registerUserForm.Name) == 0 || len(registerUserForm.Name) > 16 {
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
@@ -104,13 +104,11 @@ func RegisterUser(c *gin.Context) {
 				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 				return
 			}
-			newSession := helper.SetCookie(userToken, helper.SessionSalt)
 			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 				"user_info": map[string]interface{}{
-					"name":                registerUserForm.Name,
-					"token":               userToken,
-					"status":              helper.LoginUserStatus,
-					helper.ApacanaSession: newSession,
+					"name":   registerUserForm.Name,
+					"token":  userToken,
+					"status": helper.LoginUserStatus,
 				},
 			})
 			return
@@ -138,13 +136,11 @@ func RegisterUser(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
-	newSession := helper.SetCookie(userToken, helper.SessionSalt)
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 		"user_info": map[string]interface{}{
-			"name":                registerUserForm.Name,
-			"token":               userInfo.Token,
-			"status":              helper.LoginUserStatus,
-			helper.ApacanaSession: newSession,
+			"name":   registerUserForm.Name,
+			"token":  userInfo.Token,
+			"status": helper.LoginUserStatus,
 		},
 	})
 }
@@ -164,8 +160,8 @@ func LoginUser(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
-	if userInfo == nil || userInfo.Status == helper.TouristStatus {
-		helper.FormatLogPrint(helper.WARNING, "LoginUser status not 0")
+	if userInfo == nil {
+		helper.FormatLogPrint(helper.WARNING, "LoginUser userInfo not found")
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
@@ -179,15 +175,13 @@ func LoginUser(c *gin.Context) {
 			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 			return
 		}
-		newSession := helper.SetCookie(userInfo.Token, helper.SessionSalt)
 		helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 			"user_info": map[string]interface{}{
-				"name":                userInfo.Name,
-				"token":               userInfo.Token,
-				"status":              helper.LoginUserStatus,
-				helper.ApacanaSession: newSession,
-				"stroke_list":         strokeInfoList,
+				"name":   userInfo.Name,
+				"token":  userInfo.Token,
+				"status": helper.LoginUserStatus,
 			},
+			"stroke_list": strokeInfoList,
 		})
 		return
 	}
@@ -199,7 +193,7 @@ func LoginUser(c *gin.Context) {
 		return
 	}
 
-	if touristInfo != nil {
+	if touristInfo != nil && touristInfo.Status == 0 {
 		newStrokeStr, err := userStrokeTrans(c, touristInfo, userInfo)
 		if err != nil {
 			helper.FormatLogPrint(helper.ERROR, "LoginUser userStrokeTrans failed, err: %v", err)
@@ -220,12 +214,12 @@ func LoginUser(c *gin.Context) {
 	}
 
 	newSession := helper.SetCookie(userInfo.Token, helper.SessionSalt)
+	helper.SetBrowserCookie(c, helper.ApacanaSession, newSession)
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 		"user_info": map[string]interface{}{
-			"name":                userInfo.Name,
-			"token":               userInfo.Token,
-			"status":              helper.LoginUserStatus,
-			helper.ApacanaSession: newSession,
+			"name":   userInfo.Name,
+			"token":  userInfo.Token,
+			"status": helper.LoginUserStatus,
 		},
 		"stroke_list": strokeInfoList,
 	})

@@ -24,6 +24,7 @@ const (
 	CodeParmErr          = int32(2)
 	CodeStrokeOutOfLimit = int32(3)
 	CodeForbidden        = int32(4)
+	CodeInvalidUser      = int32(5)
 )
 
 const (
@@ -39,4 +40,5 @@ const (
 
 var (
 	ErrStrokeOutOfLimit = errors.New("ErrStrokeOutOfLimit")
+	ErrInvaildCookie    = errors.New("ErrInvaildCookie")
 )

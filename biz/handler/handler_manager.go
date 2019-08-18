@@ -9,7 +9,7 @@ import (
 )
 
 func SetupRouter(r *gin.Engine) {
-	r.POST("/api/user/tourist/create/", user.CreateTourist)
+	r.GET("/api/user/prepare/", user.PrepareUser)
 	Api := r.Group("/api/")
 	Api.Use(middleware.ApacanaCookieRequire)
 	{

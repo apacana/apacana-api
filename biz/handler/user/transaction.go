@@ -1,8 +1,6 @@
 package user
 
 import (
-	"errors"
-	"fmt"
 	"github.com/apacana/apacana-api/biz/config"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
@@ -22,25 +20,14 @@ func userStrokeTrans(c *gin.Context, touristInfo *mysql.UserInfo, userInfo *mysq
 		}
 	}()
 
-	touristStrokeList := &helper.StrokeList{
-		StrokeList: make([]int64, 0),
+	touristStrokeList, err := helper.StringToStrokeList(touristInfo.Strokes)
+	if err != nil {
+		return
 	}
-	if len(touristInfo.Strokes) != 0 {
-		touristStrokeList = helper.StringToStrokeList(touristInfo.Strokes)
-		if touristStrokeList == nil {
-			err = errors.New(fmt.Sprintf("StringToStrokeList error, strokes: %v", touristInfo.Strokes))
-			return
-		}
-	}
-	userStrokeList := &helper.StrokeList{
-		StrokeList: make([]int64, 0),
-	}
-	if len(userInfo.Strokes) != 0 {
-		userStrokeList = helper.StringToStrokeList(userInfo.Strokes)
-		if userStrokeList == nil {
-			err = errors.New(fmt.Sprintf("StringToStrokeList error, strokes: %v", userInfo.Strokes))
-			return
-		}
+
+	userStrokeList, err := helper.StringToStrokeList(userInfo.Strokes)
+	if err != nil {
+		return
 	}
 
 	// quota judge

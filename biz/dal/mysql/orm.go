@@ -23,6 +23,7 @@ func InitMysql() {
 }
 
 func Insert(tx *gorm.DB, data interface{}) error {
+	// todo: insert后的回调
 	if tx == nil {
 		tx = DB
 	}

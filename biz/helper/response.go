@@ -25,6 +25,8 @@ func NewGinResponse(code int32, result interface{}) *GinResponse {
 		msg = "ParmErr"
 	} else if code == CodeStrokeOutOfLimit {
 		msg = "StrokeOutOfLimit"
+	} else if code == CodeInvalidUser {
+		msg = "InvalidUser"
 	}
 	return &GinResponse{
 		Code:    code,

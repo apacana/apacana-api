@@ -47,20 +47,23 @@ func CreateStroke(c *gin.Context) {
 			return
 		}
 	}
-	// quota judge
-	strokeList := &helper.StrokeList{
-		StrokeList: make([]int64, 0),
+
+	if userInfo.Status == helper.TransferredStatus {
+		helper.FormatLogPrint(helper.WARNING, "CreateStroke Invalid User, token: %v", userInfo.Token)
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
 	}
-	if len(userInfo.Strokes) != 0 {
-		strokeList = helper.StringToStrokeList(userInfo.Strokes)
-		if strokeList == nil {
-			helper.FormatLogPrint(helper.ERROR, "CreateStroke StringToStrokeList failed, strokes: %v", userInfo.Strokes)
-			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
-			return
-		} else if len(strokeList.StrokeList) >= config.StrokeLimit {
-			helper.BizResponse(c, http.StatusOK, helper.CodeStrokeOutOfLimit, nil)
-			return
-		}
+
+	// quota judge
+	strokeList, err := helper.StringToStrokeList(userInfo.Strokes)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "CreateStroke StringToStrokeList failed, strokes: %v", userInfo.Strokes)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	} else if len(strokeList.StrokeList) >= config.StrokeLimit {
+		helper.FormatLogPrint(helper.WARNING, "CreateStroke ErrStrokeOutOfLimit, token: %v", userInfo.Token)
+		helper.BizResponse(c, http.StatusOK, helper.CodeStrokeOutOfLimit, nil)
+		return
 	}
 
 	// insert

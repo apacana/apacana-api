@@ -13,15 +13,19 @@ type StrokeList struct {
 	Ext        string  `json:"ext"`
 }
 
-func StringToStrokeList(str string) *StrokeList {
-	// todo: 代码优化
-	var strikeList StrokeList
-	err := json.Unmarshal([]byte(str), &strikeList)
-	if err != nil {
-		FormatLogPrint(ERROR, "StringToStrokeList failed, err: %v, str: %v", err, str)
-		return nil
+func StringToStrokeList(str string) (*StrokeList, error) {
+	strokeList := &StrokeList{
+		StrokeList: make([]int64, 0),
 	}
-	return &strikeList
+	if len(str) != 0 {
+		var newStrikeList StrokeList
+		err := json.Unmarshal([]byte(str), &newStrikeList)
+		if err != nil {
+			return nil, errors.New("StringToStrokeList failed")
+		}
+		strokeList = &newStrikeList
+	}
+	return strokeList, nil
 }
 
 func PackStrokeList(strikeList *StrokeList) *string {
@@ -30,15 +34,10 @@ func PackStrokeList(strikeList *StrokeList) *string {
 }
 
 func CreateFmtStrokeList(c *gin.Context, strokeStr string) ([]map[string]interface{}, error) {
-	strokeList := &StrokeList{
-		StrokeList: make([]int64, 0),
-	}
-	if len(strokeStr) != 0 {
-		strokeList = StringToStrokeList(strokeStr)
-		if strokeList == nil {
-			FormatLogPrint(ERROR, "GetUserInfo StringToStrokeList failed, strokes: %v", strokeStr)
-			return nil, errors.New("StringToStrokeList failed")
-		}
+	strokeList, err := StringToStrokeList(strokeStr)
+	if err != nil {
+		FormatLogPrint(ERROR, "GetUserInfo StringToStrokeList failed, strokes: %v", strokeStr)
+		return nil, errors.New("StringToStrokeList failed")
 	}
 
 	strokeInfos, err := mysql.MGetStrokeByID(c, nil, strokeList.StrokeList)

@@ -41,7 +41,7 @@ func CreateRoute(c *gin.Context) {
 		return
 	}
 
-	if strokeInfo.Status == helper.DeleteFlagStatus {
+	if strokeInfo.Status == helper.StrokeDeleteStatus {
 		helper.FormatLogPrint(helper.LOG, "CreateRoute Stroke has deleted, strokeToken: %v", createRouteForm.StrokeToken)
 		helper.BizResponse(c, http.StatusOK, helper.CodeMountDeleted, nil)
 		return

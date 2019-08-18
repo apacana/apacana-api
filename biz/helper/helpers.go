@@ -124,8 +124,8 @@ func IsValidCookie(session string) (string, error) {
 
 func SetBrowserCookie(c *gin.Context, cookieName string, cookieValue string) {
 	// 设置浏览器cookie
-	c.SetCookie(cookieName, cookieValue, YearTime, "/", "localhost", false, true)
-	c.SetCookie(cookieName, cookieValue, YearTime, "/", "apacana.com", false, true)
-	c.SetCookie(cookieName, cookieValue, YearTime, "/", "www.apacana.com", false, true)
-	c.SetCookie(cookieName, cookieValue, YearTime, "/", "120.78.145.184", false, true)
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "localhost", false, false)
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "apacana.com", false, false)
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "www.apacana.com", false, false)
+	c.SetCookie(cookieName, cookieValue, YearTime, "/", "120.78.145.184", false, false)
 }

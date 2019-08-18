@@ -49,6 +49,18 @@ func GetUserByUserPassWord(c *gin.Context, tx *gorm.DB, userName string, passWor
 	return ref, nil
 }
 
+func UserNameHasExist(c *gin.Context, tx *gorm.DB, userName string) bool {
+	if tx == nil {
+		tx = DB
+	}
+	var ref = &UserInfo{}
+	r := tx.Model(&UserInfo{}).Where("user_name = ?", userName).First(&ref)
+	if r.Error != nil && r.Error == gorm.ErrRecordNotFound {
+		return false
+	}
+	return true
+}
+
 func UpdateUserInfo(c *gin.Context, tx *gorm.DB, id int64, attrs map[string]interface{}) error {
 	if tx == nil {
 		tx = DB

@@ -32,13 +32,12 @@ const (
 const (
 	TouristStatus     = uint8(0)
 	LoginUserStatus   = uint8(1)
-	DeleteFlagStatus  = uint8(8)
 	TransferredStatus = uint8(9)
 )
 
 const (
 	StrokeNormalStatus = uint8(0)
-	StrokeDeleteStatus = uint8(1)
+	StrokeDeleteStatus = uint8(8)
 )
 
 var (

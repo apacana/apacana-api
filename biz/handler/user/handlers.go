@@ -84,6 +84,12 @@ func RegisterUser(c *gin.Context) {
 	}
 	helper.FormatLogPrint(helper.LOG, "RegisterUser from: %+v", registerUserForm)
 
+	// userName judge
+	if mysql.UserNameHasExist(c, nil, registerUserForm.UserName) {
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, "user name has exist")
+		return
+	}
+
 	userToken := c.GetString(helper.UserToken)
 	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
 	if err != nil {

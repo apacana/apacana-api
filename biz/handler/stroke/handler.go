@@ -13,7 +13,8 @@ import (
 
 func CreateStroke(c *gin.Context) {
 	var createStrokeForm CreateStrokeForm
-	if err := c.ShouldBindJSON(&createStrokeForm); err != nil || len(createStrokeForm.StrokeName) > 40 {
+	if err := c.ShouldBindJSON(&createStrokeForm); err != nil ||
+		len(createStrokeForm.StrokeName) == 0 || len(createStrokeForm.StrokeName) > 24 {
 		helper.FormatLogPrint(helper.WARNING, "CreateStroke bind json failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
@@ -77,5 +78,56 @@ func CreateStroke(c *gin.Context) {
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 		"stroke_name":  createStrokeForm.StrokeName,
 		"stroke_token": strokeToken,
+	})
+}
+
+func GetStroke(c *gin.Context) {
+	strokeToken := c.Param("strokeToken")
+	if strokeToken == "" {
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+
+	userToken := c.GetString(helper.UserToken)
+	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "GetStroke GetUserInfoByToken failed, userInfo: %v", userInfo)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if userInfo.Status == helper.TransferredStatus {
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
+	}
+
+	strokeInfo, err := mysql.GetStrokeByToken(c, nil, strokeToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "GetStroke GetStrokeByToken failed, strokeToken: %v", strokeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if strokeInfo.Status == helper.StrokeDeleteStatus {
+		helper.FormatLogPrint(helper.LOG, "GetStroke Stroke has deleted, strokeToken: %v", strokeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeMountDeleted, nil)
+		return
+	}
+
+	if strokeInfo.OwnerID != userInfo.ID {
+		helper.FormatLogPrint(helper.LOG, "GetStroke forbidden, strokeToken: %v, userToken: %v", strokeToken, userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeForbidden, nil)
+		return
+	}
+
+	routeList, err := transform.CreateFmtRouteList(c, strokeInfo.RoutesList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "GetStroke CreateFmtRouteList failed, routeList: %v", strokeInfo.RoutesList)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+		"stroke_name":  strokeInfo.StrokeName,
+		"stroke_token": strokeToken,
+		"route_list":   routeList,
 	})
 }

@@ -111,12 +111,19 @@ func RegisterUser(c *gin.Context) {
 				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 				return
 			}
+			strokeInfoList, err := transform.CreateFmtStrokeList(c, "")
+			if err != nil {
+				helper.FormatLogPrint(helper.ERROR, "RegisterUser CreateFmtStrokeList failed, err: %v", err)
+				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+				return
+			}
 			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 				"user_info": map[string]interface{}{
 					"name":   registerUserForm.Name,
 					"token":  userToken,
 					"status": helper.LoginUserStatus,
 				},
+				"stroke_list": strokeInfoList,
 			})
 			return
 		}
@@ -143,12 +150,19 @@ func RegisterUser(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
+	strokeInfoList, err := transform.CreateFmtStrokeList(c, userInfo.Strokes)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "RegisterUser CreateFmtStrokeList failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 		"user_info": map[string]interface{}{
 			"name":   registerUserForm.Name,
 			"token":  userInfo.Token,
 			"status": helper.LoginUserStatus,
 		},
+		"stroke_list": strokeInfoList,
 	})
 }
 

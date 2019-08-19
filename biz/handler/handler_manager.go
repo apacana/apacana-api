@@ -29,11 +29,12 @@ func SetupRouter(r *gin.Engine) {
 		}
 		ApiStroke := Api.Group("/stroke/")
 		{
-			ApiStroke.POST("create", stroke.CreateStroke)
+			ApiStroke.POST("/create/", stroke.CreateStroke)
+			ApiStroke.GET("/:strokeToken/", stroke.GetStroke)
 		}
 		ApiRoute := Api.Group("/route/")
 		{
-			ApiRoute.POST("create", route.CreateRoute)
+			ApiRoute.POST("/create/", route.CreateRoute)
 		}
 	}
 }

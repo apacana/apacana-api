@@ -11,7 +11,8 @@ import (
 
 func CreateRoute(c *gin.Context) {
 	var createRouteForm CreateRouteForm
-	if err := c.ShouldBindJSON(&createRouteForm); err != nil || len(createRouteForm.RouteName) > 40 {
+	if err := c.ShouldBindJSON(&createRouteForm); err != nil ||
+		len(createRouteForm.RouteName) == 0 || len(createRouteForm.RouteName) > 24 {
 		helper.FormatLogPrint(helper.WARNING, "CreateStroke bind json failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return

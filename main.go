@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/handler"
+	"github.com/apacana/apacana-api/biz/middleware"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -19,6 +20,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	mysql.InitMysql()
 	r := gin.Default()
+	r.Use(middleware.AddAllowOriginMW)
 	handler.SetupRouter(r)
 	// Listen and Server in 0.0.0.0:8899
 	err := r.Run(":8899")

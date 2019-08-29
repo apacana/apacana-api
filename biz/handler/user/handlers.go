@@ -44,6 +44,11 @@ func GetUserInfo(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
+	if userInfo.Status == helper.TransferredStatus {
+		helper.FormatLogPrint(helper.WARNING, "Invalid User, token: %v", userInfo.Token)
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
+	}
 
 	strokeInfoList, err := transform.CreateFmtStrokeList(c, userInfo.Strokes)
 	if err != nil {
@@ -54,8 +59,8 @@ func GetUserInfo(c *gin.Context) {
 
 	if userInfo.Status == 0 {
 		helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-			"is_tourist":  true,
-			"stroke_list": strokeInfoList,
+			"is_tourist":   true,
+			"strokes_info": strokeInfoList,
 		})
 		return
 	}
@@ -66,7 +71,7 @@ func GetUserInfo(c *gin.Context) {
 			"token":  userInfo.Token,
 			"status": userInfo.Status,
 		},
-		"stroke_list": strokeInfoList,
+		"strokes_info": strokeInfoList,
 	})
 }
 
@@ -123,7 +128,7 @@ func RegisterUser(c *gin.Context) {
 					"token":  userToken,
 					"status": helper.LoginUserStatus,
 				},
-				"stroke_list": strokeInfoList,
+				"strokes_info": strokeInfoList,
 			})
 			return
 		}
@@ -162,7 +167,7 @@ func RegisterUser(c *gin.Context) {
 			"token":  userInfo.Token,
 			"status": helper.LoginUserStatus,
 		},
-		"stroke_list": strokeInfoList,
+		"strokes_info": strokeInfoList,
 	})
 }
 
@@ -202,7 +207,7 @@ func LoginUser(c *gin.Context) {
 				"token":  userInfo.Token,
 				"status": helper.LoginUserStatus,
 			},
-			"stroke_list": strokeInfoList,
+			"strokes_info": strokeInfoList,
 		})
 		return
 	}
@@ -242,6 +247,6 @@ func LoginUser(c *gin.Context) {
 			"token":  userInfo.Token,
 			"status": helper.LoginUserStatus,
 		},
-		"stroke_list": strokeInfoList,
+		"strokes_info": strokeInfoList,
 	})
 }

@@ -31,6 +31,7 @@ func SetupRouter(r *gin.Engine) {
 		{
 			ApiStroke.POST("/create/", stroke.CreateStroke)
 			ApiStroke.GET("/:strokeToken/", stroke.GetStroke)
+			ApiStroke.POST("/change/default/", stroke.ChangeDefault)
 		}
 		ApiRoute := Api.Group("/route/")
 		{

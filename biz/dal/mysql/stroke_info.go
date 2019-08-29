@@ -10,6 +10,7 @@ type StrokeInfo struct {
 	StrokeToken string `gorm:"stroke_token" json:"stroke_token"`
 	StrokeName  string `gorm:"stroke_name" json:"stroke_name"`
 	RoutesList  string `gorm:"routes_list" json:"routes_list"`
+	PointsList  string `gorm:"points_list" json:"points_list"`
 	OwnerID     int64  `gorm:"owner_id" json:"owner_id"`
 	Status      uint8  `gorm:"status" json:"status"`
 	CreateTime  string `gorm:"create_time" json:"create_time"`

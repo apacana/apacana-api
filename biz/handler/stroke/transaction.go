@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *transform.StrokeList, strokeName string) (strokeToken string, err error) {
+func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *transform.StrokeList, strokeName string) (strokeToken string, createTime string, err error) {
 	tx := mysql.DB.Begin()
 	defer func() {
 		if err == nil {
@@ -22,14 +22,14 @@ func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *tran
 	}()
 
 	// create stroke
-	nowTime := time.Now().Format("2006-01-02 15:04:05")
+	createTime = time.Now().Format("2006-01-02 15:04:05")
 	strokeToken = helper.GenerateToken([]byte{'s', 't', 'r', 'o', 'k', 'e'}, "")
 	err = mysql.InsertStrokeInfo(c, tx, &mysql.StrokeInfo{
 		StrokeToken: strokeToken,
 		StrokeName:  strokeName,
 		OwnerID:     userInfo.ID,
-		CreateTime:  nowTime,
-		UpdateTime:  nowTime,
+		CreateTime:  createTime,
+		UpdateTime:  createTime,
 	})
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "createUserStroke InsertStrokeInfo failed, err: %v", err)
@@ -42,7 +42,10 @@ func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *tran
 	}
 
 	// update user
-	strokeList.StrokeList = append(strokeList.StrokeList, strokeInfo.ID)
+	if strokeList.DefaultStroke != 0 {
+		strokeList.HistoryStrokeList = append(strokeList.HistoryStrokeList, strokeList.DefaultStroke)
+	}
+	strokeList.DefaultStroke = strokeInfo.ID
 	err = mysql.UpdateUserInfo(c, tx, userInfo.ID, map[string]interface{}{
 		"strokes": *transform.PackStrokeList(strokeList),
 	})

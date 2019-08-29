@@ -32,7 +32,11 @@ func userStrokeTrans(c *gin.Context, touristInfo *mysql.UserInfo, userInfo *mysq
 	}
 
 	// quota judge
-	if len(userStrokeList.StrokeList)+len(touristStrokeList.StrokeList) > config.StrokeLimit {
+	defaultNum := 0
+	if touristStrokeList.DefaultStroke != 0 {
+		defaultNum = 1
+	}
+	if len(userStrokeList.HistoryStrokeList)+len(touristStrokeList.HistoryStrokeList)+defaultNum > config.StrokeLimit {
 		err = helper.ErrStrokeOutOfLimit
 		return
 	}
@@ -45,8 +49,11 @@ func userStrokeTrans(c *gin.Context, touristInfo *mysql.UserInfo, userInfo *mysq
 	}
 
 	// update user
-	for _, touristStroke := range touristStrokeList.StrokeList {
-		userStrokeList.StrokeList = append(userStrokeList.StrokeList, touristStroke)
+	for _, touristStroke := range touristStrokeList.HistoryStrokeList {
+		userStrokeList.HistoryStrokeList = append(userStrokeList.HistoryStrokeList, touristStroke)
+	}
+	if touristStrokeList.DefaultStroke != 0 {
+		userStrokeList.HistoryStrokeList = append(userStrokeList.HistoryStrokeList, touristStrokeList.DefaultStroke)
 	}
 
 	strokeStr = *transform.PackStrokeList(userStrokeList)

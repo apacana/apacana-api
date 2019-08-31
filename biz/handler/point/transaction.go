@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList *transform.PointList, form AddPointForm, pointType mysql.PointType) (pointInfoOut *out.PointInfoOut, err error) {
+func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList *transform.PointList, form AddPointForm, pointType mysql.PointType) (outPut map[string]interface{}, err error) {
 	tx := mysql.DB.Begin()
 	defer func() {
 		if err == nil {
@@ -61,7 +61,7 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 		helper.FormatLogPrint(helper.ERROR, "addStrokePointList GetPointByToken failed, err: %v, pointToken: %v", err, pointToken)
 		return
 	}
-	pointInfoOut = &out.PointInfoOut{
+	pointInfoOut := &out.PointInfoOut{
 		PointToken: pointInfo.PointToken,
 		PointID:    pointInfo.PointID,
 		PointType:  form.PointType,
@@ -73,10 +73,19 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 		IconColor:  pointInfo.IconColor,
 		Ext:        pointInfo.Ext,
 	}
+	outPut = map[string]interface{}{
+		"stroke_info": out.DefaultStrokeOut{
+			StrokeToken: strokeInfo.StrokeToken,
+			StrokeName:  strokeInfo.StrokeName,
+			UpdateTime:  nowTime,
+		},
+		"point_info": pointInfoOut,
+	}
 
 	pointList.PointList = append(pointList.PointList, pointInfo.ID)
 	err = mysql.UpdateStrokeByToken(c, tx, strokeInfo.StrokeToken, map[string]interface{}{
 		"points_list": *transform.PackPointList(pointList),
+		"update_time": nowTime,
 	})
 
 	return

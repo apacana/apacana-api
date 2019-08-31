@@ -7,5 +7,5 @@ const (
 )
 
 const (
-	DefaultStrokeName = "default stroke"
+	DefaultStrokeName = "default itinerary"
 )

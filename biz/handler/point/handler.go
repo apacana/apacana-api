@@ -110,10 +110,10 @@ func AddPoint(c *gin.Context) {
 	}
 
 	// insert point
-	pointInfoOut, err := addStrokePointList(c, strokeInfo, pointList, addPointForm, pointType)
+	outPut, err := addStrokePointList(c, strokeInfo, pointList, addPointForm, pointType)
 	if err != nil {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
-	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, pointInfoOut)
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, outPut)
 }

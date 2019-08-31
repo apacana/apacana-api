@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/out"
 	"github.com/gin-gonic/gin"
 	"unsafe"
 )
@@ -34,7 +35,8 @@ func PackPointList(pointRoute *PointList) *string {
 	return (*string)(unsafe.Pointer(&bytesData))
 }
 
-func CreateFmtPointList(c *gin.Context, pointsStr string) ([]map[string]interface{}, error) {
+func CreateFmtPointList(c *gin.Context, pointsStr string) ([]*out.PointInfoOut, error) {
+	pointListOut := make([]*out.PointInfoOut, 0)
 	pointList, err := StringToPointList(pointsStr)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateFmtPointList StringToPointList failed, points: %v", pointsStr)
@@ -46,22 +48,20 @@ func CreateFmtPointList(c *gin.Context, pointsStr string) ([]map[string]interfac
 		helper.FormatLogPrint(helper.ERROR, "CreateFmtPointList MGetPointByID failed, err: %v", err)
 		return nil, errors.New("CreateFmtPointList failed")
 	}
-	pointInfoList := make([]map[string]interface{}, 0)
 	for _, pointInfo := range pointInfos {
 		pointTypeName, _ := helper.GetNameByPointType(pointInfo.PointType)
-		pointInfoList = append(pointInfoList, map[string]interface{}{
-			"point_id":    pointInfo.PointID,
-			"point_type":  pointTypeName,
-			"point_token": pointInfo.PointToken,
-			"text":        pointInfo.Text,
-			"place_name":  pointInfo.PlaceName,
-			"center":      pointInfo.Center,
-			"comment":     pointInfo.Comment,
-			"icon_type":   pointInfo.IconType,
-			"icon_color":  pointInfo.IconColor,
-			"status":      pointInfo.Status,
-			"ext":         pointInfo.Ext,
+		pointListOut = append(pointListOut, &out.PointInfoOut{
+			PointID:    pointInfo.PointID,
+			PointType:  pointTypeName,
+			PointToken: pointInfo.PointToken,
+			Text:       pointInfo.Text,
+			PlaceName:  pointInfo.PlaceName,
+			Center:     pointInfo.Center,
+			Comment:    pointInfo.Comment,
+			IconType:   pointInfo.IconType,
+			IconColor:  pointInfo.IconColor,
+			Ext:        pointInfo.Ext,
 		})
 	}
-	return pointInfoList, nil
+	return pointListOut, nil
 }

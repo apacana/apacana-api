@@ -3,12 +3,13 @@ package point
 import (
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/out"
 	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 	"time"
 )
 
-func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList *transform.PointList, form AddPointForm, pointType mysql.PointType) (pointToken string, err error) {
+func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList *transform.PointList, form AddPointForm, pointType mysql.PointType) (pointInfoOut *out.PointInfoOut, err error) {
 	tx := mysql.DB.Begin()
 	defer func() {
 		if err == nil {
@@ -35,7 +36,7 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 		ext = *form.Ext
 	}
 	nowTime := time.Now().Format("2006-01-02 15:04:05")
-	pointToken = helper.GenerateToken([]byte{'p', 'o', 'i', 'n', 't'}, "")
+	pointToken := helper.GenerateToken([]byte{'p', 'o', 'i', 'n', 't'}, "")
 	err = mysql.InsertPointInfo(c, tx, &mysql.PointInfo{
 		PointToken: pointToken,
 		PointID:    form.PointID,
@@ -59,6 +60,18 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "addStrokePointList GetPointByToken failed, err: %v, pointToken: %v", err, pointToken)
 		return
+	}
+	pointInfoOut = &out.PointInfoOut{
+		PointToken: pointInfo.PointToken,
+		PointID:    pointInfo.PointID,
+		PointType:  form.PointType,
+		Text:       pointInfo.Text,
+		PlaceName:  pointInfo.PlaceName,
+		Center:     pointInfo.Center,
+		Comment:    pointInfo.Comment,
+		IconType:   pointInfo.IconType,
+		IconColor:  pointInfo.IconColor,
+		Ext:        pointInfo.Ext,
 	}
 
 	pointList.PointList = append(pointList.PointList, pointInfo.ID)

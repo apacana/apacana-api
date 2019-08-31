@@ -4,6 +4,7 @@ import (
 	"github.com/apacana/apacana-api/biz/config"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/out"
 	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -75,5 +76,9 @@ func CreateRoute(c *gin.Context) {
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 		"route_name":  createRouteForm.RouteName,
 		"route_token": routeToken,
+	})
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, &out.RouteInfoOut{
+		RouteToken: routeToken,
+		RouteName:  createRouteForm.RouteName,
 	})
 }

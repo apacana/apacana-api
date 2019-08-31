@@ -19,15 +19,19 @@ const (
 )
 
 const (
-	CodeSuccess          = int32(0)
-	CodeFailed           = int32(1)
-	CodeParmErr          = int32(2)
-	CodeStrokeOutOfLimit = int32(3)
-	CodeForbidden        = int32(4)
-	CodeInvalidUser      = int32(5)
-	CodeMountDeleted     = int32(6)
-	CodeRouteOutOfLimit  = int32(7)
-	CodePointOutOfLimit  = int32(8)
+	CodeSuccess      = int32(0)
+	CodeFailed       = int32(1)
+	CodeParmErr      = int32(2)
+	CodeForbidden    = int32(4)
+	CodeMountDeleted = int32(6)
+
+	CodeInvalidUser = int32(1001)
+
+	CodeStrokeOutOfLimit = int32(2001)
+
+	CodeRouteOutOfLimit = int32(3001)
+
+	CodePointOutOfLimit = int32(4001)
 )
 
 const (

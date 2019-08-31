@@ -4,6 +4,7 @@ import (
 	"github.com/apacana/apacana-api/biz/config"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/out"
 	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -79,10 +80,10 @@ func CreateStroke(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
-	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-		"stroke_name":  createStrokeForm.StrokeName,
-		"stroke_token": strokeToken,
-		"create_time":  createTime,
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, &out.DefaultStrokeOut{
+		StrokeName:  strokeName,
+		StrokeToken: strokeToken,
+		UpdateTime:  createTime,
 	})
 }
 
@@ -129,13 +130,19 @@ func GetStroke(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
+	pointList, err := transform.CreateFmtPointList(c, strokeInfo.PointsList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "GetStroke CreateFmtPointList failed, pointList: %v", strokeInfo.PointsList)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
 
-	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-		"stroke_name":  strokeInfo.StrokeName,
-		"stroke_token": strokeToken,
-		"update_time":  strokeInfo.UpdateTime,
-		"point_list":   strokeInfo.PointsList,
-		"route_list":   routeList,
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, &out.DefaultStrokeOut{
+		StrokeName:  strokeInfo.StrokeName,
+		StrokeToken: strokeToken,
+		UpdateTime:  strokeInfo.UpdateTime,
+		PointList:   pointList,
+		RouteList:   routeList,
 	})
 }
 
@@ -180,7 +187,7 @@ func ChangeDefault(c *gin.Context) {
 
 	userStrokeList, err := transform.StringToStrokeList(userInfo.Strokes)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "StringToStrokeList failed, Strokes: %v", userInfo.Strokes)
+		helper.FormatLogPrint(helper.ERROR, "ChangeDefault StringToStrokeList failed, Strokes: %v", userInfo.Strokes)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
@@ -201,16 +208,22 @@ func ChangeDefault(c *gin.Context) {
 
 	routeList, err := transform.CreateFmtRouteList(c, strokeInfo.RoutesList)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "GetStroke CreateFmtRouteList failed, routeList: %v", strokeInfo.RoutesList)
+		helper.FormatLogPrint(helper.ERROR, "ChangeDefault CreateFmtRouteList failed, routeList: %v", strokeInfo.RoutesList)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	pointList, err := transform.CreateFmtPointList(c, strokeInfo.PointsList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "ChangeDefault CreateFmtPointList failed, pointList: %v", strokeInfo.PointsList)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
 
-	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-		"stroke_name":  strokeInfo.StrokeName,
-		"stroke_token": strokeToken,
-		"update_time":  strokeInfo.UpdateTime,
-		"point_list":   strokeInfo.PointsList,
-		"route_list":   routeList,
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, &out.DefaultStrokeOut{
+		StrokeName:  strokeInfo.StrokeName,
+		StrokeToken: strokeToken,
+		UpdateTime:  strokeInfo.UpdateTime,
+		PointList:   pointList,
+		RouteList:   routeList,
 	})
 }

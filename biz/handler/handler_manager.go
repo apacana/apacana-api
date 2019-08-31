@@ -40,7 +40,7 @@ func SetupRouter(r *gin.Engine) {
 		}
 		ApiPoint := Api.Group("/point/")
 		{
-			ApiPoint.POST("/add/", point.AddPoint)
+			ApiPoint.POST("/add/", point.AddPoint) // 新增行程点
 		}
 	}
 }

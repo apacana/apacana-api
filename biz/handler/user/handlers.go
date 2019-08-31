@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/out"
 	"github.com/apacana/apacana-api/biz/transform"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -66,10 +67,10 @@ func GetUserInfo(c *gin.Context) {
 	}
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 		"is_tourist": false,
-		"user_info": map[string]interface{}{
-			"name":   userInfo.Name,
-			"token":  userInfo.Token,
-			"status": userInfo.Status,
+		"user_info": &out.UserInfoOut{
+			Name:   userInfo.Name,
+			Token:  userInfo.Token,
+			Status: userInfo.Status,
 		},
 		"strokes_info": strokeInfoList,
 	})
@@ -123,10 +124,10 @@ func RegisterUser(c *gin.Context) {
 				return
 			}
 			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-				"user_info": map[string]interface{}{
-					"name":   registerUserForm.Name,
-					"token":  userToken,
-					"status": helper.LoginUserStatus,
+				"user_info": &out.UserInfoOut{
+					Name:   registerUserForm.Name,
+					Token:  userToken,
+					Status: helper.LoginUserStatus,
 				},
 				"strokes_info": strokeInfoList,
 			})
@@ -162,10 +163,10 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-		"user_info": map[string]interface{}{
-			"name":   registerUserForm.Name,
-			"token":  userInfo.Token,
-			"status": helper.LoginUserStatus,
+		"user_info": &out.UserInfoOut{
+			Name:   registerUserForm.Name,
+			Token:  userInfo.Token,
+			Status: helper.LoginUserStatus,
 		},
 		"strokes_info": strokeInfoList,
 	})
@@ -202,10 +203,10 @@ func LoginUser(c *gin.Context) {
 			return
 		}
 		helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-			"user_info": map[string]interface{}{
-				"name":   userInfo.Name,
-				"token":  userInfo.Token,
-				"status": helper.LoginUserStatus,
+			"user_info": &out.UserInfoOut{
+				Name:   userInfo.Name,
+				Token:  userInfo.Token,
+				Status: helper.LoginUserStatus,
 			},
 			"strokes_info": strokeInfoList,
 		})
@@ -242,10 +243,10 @@ func LoginUser(c *gin.Context) {
 	newSession := helper.SetCookie(userInfo.Token, helper.SessionSalt)
 	helper.SetBrowserCookie(c, helper.ApacanaSession, newSession)
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
-		"user_info": map[string]interface{}{
-			"name":   userInfo.Name,
-			"token":  userInfo.Token,
-			"status": helper.LoginUserStatus,
+		"user_info": &out.UserInfoOut{
+			Name:   userInfo.Name,
+			Token:  userInfo.Token,
+			Status: helper.LoginUserStatus,
 		},
 		"strokes_info": strokeInfoList,
 	})

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/out"
 	"github.com/gin-gonic/gin"
 	"unsafe"
 )
@@ -36,7 +37,10 @@ func PackStrokeList(strikeList *StrokeList) *string {
 	return (*string)(unsafe.Pointer(&bytesData))
 }
 
-func CreateFmtStrokeList(c *gin.Context, strokeStr string) (map[string]interface{}, error) {
+func CreateFmtStrokeList(c *gin.Context, strokeStr string) (*out.StrokesInfoOut, error) {
+	strokesInfoOut := &out.StrokesInfoOut{
+		HistoryStrokeList: make([]*out.StrokeInfoOut, 0),
+	}
 	strokeList, err := StringToStrokeList(strokeStr)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateFmtStrokeList StringToStrokeList failed, strokes: %v", strokeStr)
@@ -45,42 +49,44 @@ func CreateFmtStrokeList(c *gin.Context, strokeStr string) (map[string]interface
 
 	strokeInfos, err := mysql.MGetStrokeByID(c, nil, strokeList.HistoryStrokeList)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
+		helper.FormatLogPrint(helper.ERROR, "CreateFmtStrokeList MGetStrokeByID failed, err: %v", err)
 		return nil, errors.New("MGetStrokeByID failed")
 	}
 
-	defaultStroke := map[string]interface{}{}
 	if strokeList.DefaultStroke != 0 {
 		stroke, err := mysql.MGetStrokeByID(c, nil, []int64{strokeList.DefaultStroke})
 		if err != nil {
-			helper.FormatLogPrint(helper.ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
+			helper.FormatLogPrint(helper.ERROR, "CreateFmtStrokeList MGetStrokeByID failed, err: %v", err)
 			return nil, errors.New("MGetStrokeByID failed")
 		}
 		if len(stroke) == 0 {
 			helper.FormatLogPrint(helper.WARNING, "Stroke not exist, strokeID: %d", strokeList.DefaultStroke)
 			return nil, errors.New("MGetStrokeByID failed")
 		}
-		defaultStroke = map[string]interface{}{
-			"stroke_token": stroke[0].StrokeToken,
-			"stroke_name":  stroke[0].StrokeName,
-			"point_list":   stroke[0].PointsList,
-			"update_time":  stroke[0].UpdateTime,
+		routeListOut, err := CreateFmtRouteList(c, stroke[0].RoutesList)
+		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "CreateFmtStrokeList CreateFmtRouteList failed, err: %v", err)
+			return nil, errors.New("CreateFmtRouteList failed")
+		}
+		pointListOut, err := CreateFmtPointList(c, stroke[0].PointsList)
+		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "CreateFmtStrokeList CreateFmtPointList failed, err: %v", err)
+			return nil, errors.New("CreateFmtPointList failed")
+		}
+		strokesInfoOut.DefaultStroke = &out.DefaultStrokeOut{
+			StrokeToken: stroke[0].StrokeToken,
+			StrokeName:  stroke[0].StrokeName,
+			PointList:   pointListOut,
+			RouteList:   routeListOut,
+			UpdateTime:  stroke[0].UpdateTime,
 		}
 	}
 
-	historyStrokeInfoList := make([]map[string]interface{}, 0)
 	for _, strokeInfo := range strokeInfos {
-		if strokeInfo.Status == helper.StrokeDeleteStatus {
-			continue
-		}
-		historyStrokeInfoList = append(historyStrokeInfoList, map[string]interface{}{
-			"stroke_token": strokeInfo.StrokeToken,
-			"stroke_name":  strokeInfo.StrokeName,
+		strokesInfoOut.HistoryStrokeList = append(strokesInfoOut.HistoryStrokeList, &out.StrokeInfoOut{
+			StrokeToken: strokeInfo.StrokeToken,
+			StrokeName:  strokeInfo.StrokeName,
 		})
 	}
-	strokeInfo := map[string]interface{}{
-		"default_stroke":      defaultStroke,
-		"history_stroke_list": historyStrokeInfoList,
-	}
-	return strokeInfo, nil
+	return strokesInfoOut, nil
 }

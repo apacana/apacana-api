@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
+	"github.com/apacana/apacana-api/biz/out"
 	"github.com/gin-gonic/gin"
 	"unsafe"
 )
@@ -34,7 +35,8 @@ func PackRouteList(routeList *RouteList) *string {
 	return (*string)(unsafe.Pointer(&bytesData))
 }
 
-func CreateFmtRouteList(c *gin.Context, routesStr string) ([]map[string]interface{}, error) {
+func CreateFmtRouteList(c *gin.Context, routesStr string) ([]*out.RouteInfoOut, error) {
+	routeListOut := make([]*out.RouteInfoOut, 0)
 	routeList, err := StringToRouteList(routesStr)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateFmtRouteList StringToRouteList failed, routes: %v", routesStr)
@@ -46,12 +48,11 @@ func CreateFmtRouteList(c *gin.Context, routesStr string) ([]map[string]interfac
 		helper.FormatLogPrint(helper.ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
 		return nil, errors.New("CreateFmtRouteList failed")
 	}
-	routeInfoList := make([]map[string]interface{}, 0)
 	for _, routeInfo := range RouteInfos {
-		routeInfoList = append(routeInfoList, map[string]interface{}{
-			"route_token": routeInfo.RouteToken,
-			"route_name":  routeInfo.RouteName,
+		routeListOut = append(routeListOut, &out.RouteInfoOut{
+			RouteToken: routeInfo.RouteToken,
+			RouteName:  routeInfo.RouteName,
 		})
 	}
-	return routeInfoList, nil
+	return routeListOut, nil
 }

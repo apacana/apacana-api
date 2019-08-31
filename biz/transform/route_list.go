@@ -22,7 +22,7 @@ func StringToRouteList(str string) (*RouteList, error) {
 		var newRouteList RouteList
 		err := json.Unmarshal([]byte(str), &newRouteList)
 		if err != nil {
-			return nil, errors.New("StringToStrokeList failed")
+			return nil, errors.New("StringToRouteList failed")
 		}
 		routeList = &newRouteList
 	}
@@ -38,13 +38,13 @@ func CreateFmtRouteList(c *gin.Context, routesStr string) ([]map[string]interfac
 	routeList, err := StringToRouteList(routesStr)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateFmtRouteList StringToRouteList failed, routes: %v", routesStr)
-		return nil, errors.New("StringToRouteList failed")
+		return nil, errors.New("CreateFmtRouteList failed")
 	}
 
 	RouteInfos, err := mysql.MGetRouteByID(c, nil, routeList.RouteList)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "GetUserInfo MGetStrokeByID failed, err: %v", err)
-		return nil, errors.New("MGetStrokeByID failed")
+		return nil, errors.New("CreateFmtRouteList failed")
 	}
 	routeInfoList := make([]map[string]interface{}, 0)
 	for _, routeInfo := range RouteInfos {

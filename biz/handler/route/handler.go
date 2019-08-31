@@ -66,7 +66,7 @@ func CreateRoute(c *gin.Context) {
 		return
 	}
 
-	// insert
+	// insert route
 	routeToken, err := createStrokeRoute(c, strokeInfo, routeList, createRouteForm.RouteName)
 	if err != nil {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)

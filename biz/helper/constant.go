@@ -27,6 +27,7 @@ const (
 	CodeInvalidUser      = int32(5)
 	CodeMountDeleted     = int32(6)
 	CodeRouteOutOfLimit  = int32(7)
+	CodePointOutOfLimit  = int32(8)
 )
 
 const (

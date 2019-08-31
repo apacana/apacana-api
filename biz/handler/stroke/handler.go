@@ -13,13 +13,17 @@ import (
 
 func CreateStroke(c *gin.Context) {
 	var createStrokeForm CreateStrokeForm
-	if err := c.ShouldBindJSON(&createStrokeForm); err != nil ||
-		len(createStrokeForm.StrokeName) == 0 || len(createStrokeForm.StrokeName) > 24 {
+	if err := c.ShouldBindJSON(&createStrokeForm); err != nil {
 		helper.FormatLogPrint(helper.WARNING, "CreateStroke bind json failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
 	helper.FormatLogPrint(helper.LOG, "CreateStroke from: %+v", createStrokeForm)
+	strokeName := config.DefaultStrokeName
+	if createStrokeForm.StrokeName != nil && len(*createStrokeForm.StrokeName) < 24 {
+		strokeName = *createStrokeForm.StrokeName
+	}
+
 	userToken := c.GetString(helper.UserToken)
 	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
 	if err != nil {
@@ -42,7 +46,7 @@ func CreateStroke(c *gin.Context) {
 			}
 			userInfo, err = mysql.GetUserInfoByToken(c, nil, userToken)
 			if err != nil {
-				helper.FormatLogPrint(helper.ERROR, "GetUserInfoByToken Tourist GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
+				helper.FormatLogPrint(helper.ERROR, "CreateStroke GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
 			}
 		} else {
 			helper.FormatLogPrint(helper.ERROR, "CreateStroke GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
@@ -70,7 +74,7 @@ func CreateStroke(c *gin.Context) {
 	}
 
 	// insert
-	strokeToken, createTime, err := createUserStroke(c, userInfo, strokeList, createStrokeForm.StrokeName)
+	_, strokeToken, createTime, err := CreateUserStroke(c, userInfo, strokeList, strokeName)
 	if err != nil {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return

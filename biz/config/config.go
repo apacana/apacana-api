@@ -1,4 +1,11 @@
 package config
 
-const StrokeLimit = 100
-const RouteLimit = 100
+const (
+	StrokeLimit = 100
+	RouteLimit  = 100
+	PointLimit  = 100
+)
+
+const (
+	DefaultStrokeName = "default stroke"
+)

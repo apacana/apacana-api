@@ -31,6 +31,8 @@ func NewGinResponse(code int32, result interface{}) *GinResponse {
 		msg = "MountDeleted"
 	} else if code == CodeRouteOutOfLimit {
 		msg = "RouteOutOfLimit"
+	} else if code == CodePointOutOfLimit {
+		msg = "PointOutOfLimit"
 	}
 	return &GinResponse{
 		Code:    code,

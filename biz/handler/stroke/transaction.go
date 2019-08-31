@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *transform.StrokeList, strokeName string) (strokeToken string, createTime string, err error) {
+func CreateUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *transform.StrokeList, strokeName string) (strokeID int64, strokeToken string, createTime string, err error) {
 	tx := mysql.DB.Begin()
 	defer func() {
 		if err == nil {
@@ -16,7 +16,7 @@ func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *tran
 		}
 		if err != nil {
 			if r := tx.Rollback(); r.Error != nil {
-				helper.FormatLogPrint(helper.ERROR, "createUserStroke failed, err: %v", err)
+				helper.FormatLogPrint(helper.ERROR, "CreateUserStroke failed, err: %v", err)
 			}
 		}
 	}()
@@ -32,12 +32,12 @@ func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *tran
 		UpdateTime:  createTime,
 	})
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "createUserStroke InsertStrokeInfo failed, err: %v", err)
+		helper.FormatLogPrint(helper.ERROR, "CreateUserStroke InsertStrokeInfo failed, err: %v", err)
 		return
 	}
 	strokeInfo, err := mysql.GetStrokeByToken(c, tx, strokeToken)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "createUserStroke GetStrokeByToken failed, err: %v, strokeToken: %v", err, strokeToken)
+		helper.FormatLogPrint(helper.ERROR, "CreateUserStroke GetStrokeByToken failed, err: %v, strokeToken: %v", err, strokeToken)
 		return
 	}
 
@@ -46,11 +46,12 @@ func createUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *tran
 		strokeList.HistoryStrokeList = append(strokeList.HistoryStrokeList, strokeList.DefaultStroke)
 	}
 	strokeList.DefaultStroke = strokeInfo.ID
+	strokeID = strokeInfo.ID
 	err = mysql.UpdateUserInfo(c, tx, userInfo.ID, map[string]interface{}{
 		"strokes": *transform.PackStrokeList(strokeList),
 	})
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "createUserStroke UpdateUserInfo failed, err: %v, userID: %d", err, userInfo.ID)
+		helper.FormatLogPrint(helper.ERROR, "CreateUserStroke UpdateUserInfo failed, err: %v, userID: %d", err, userInfo.ID)
 		return
 	}
 

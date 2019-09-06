@@ -33,6 +33,8 @@ func NewGinResponse(code int32, result interface{}) *GinResponse {
 		msg = "RouteOutOfLimit"
 	} else if code == CodePointOutOfLimit {
 		msg = "PointOutOfLimit"
+	} else if code == CodePointExist {
+		msg = "PointExist"
 	}
 	return &GinResponse{
 		Code:    code,

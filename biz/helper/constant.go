@@ -32,6 +32,7 @@ const (
 	CodeRouteOutOfLimit = int32(3001)
 
 	CodePointOutOfLimit = int32(4001)
+	CodePointExist      = int32(4002)
 )
 
 const (

@@ -85,7 +85,7 @@ func AddPoint(c *gin.Context) {
 			return
 		}
 		if !allow {
-			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+			helper.BizResponse(c, http.StatusOK, helper.CodePointExist, nil)
 			return
 		}
 	}

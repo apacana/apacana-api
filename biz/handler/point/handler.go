@@ -76,18 +76,6 @@ func AddPoint(c *gin.Context) {
 			return
 		}
 		defaultStrokeID = strokeID
-	} else {
-		// 唯一性校验
-		allow, err := mysql.AllowAddPoint(c, nil, addPointForm.PointID, pointType, defaultStrokeID)
-		if err != nil {
-			helper.FormatLogPrint(helper.ERROR, "AddPoint AllowAddPoint failed, err: %v", err)
-			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
-			return
-		}
-		if !allow {
-			helper.BizResponse(c, http.StatusOK, helper.CodePointExist, nil)
-			return
-		}
 	}
 
 	// quota judge
@@ -109,8 +97,104 @@ func AddPoint(c *gin.Context) {
 		return
 	}
 
+	// 唯一性校验
+	pointInfo, err := mysql.GetPointByPointID(c, nil, addPointForm.PointID, pointType, defaultStrokeID)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "AddPoint GetPointByPointID failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if pointInfo != nil {
+		if pointInfo.Status == helper.PointDeleteStatus {
+			// update point status
+			outPut, err := recreateStrokePointList(c, strokeInfo, pointList, pointInfo)
+			if err != nil {
+				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+				return
+			}
+			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, outPut)
+			return
+		} else {
+			helper.BizResponse(c, http.StatusOK, helper.CodePointExist, nil)
+			return
+		}
+	}
+
 	// insert point
 	outPut, err := addStrokePointList(c, strokeInfo, pointList, addPointForm, pointType)
+	if err != nil {
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, outPut)
+}
+
+func DeletePoint(c *gin.Context) {
+	var deletePointForm DeletePointForm
+	if err := c.ShouldBindJSON(&deletePointForm); err != nil {
+		helper.FormatLogPrint(helper.WARNING, "DeletePoint bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	pointType, err := helper.GetPointTypeByName(deletePointForm.PointType)
+	if err != nil {
+		helper.FormatLogPrint(helper.WARNING, "DeletePoint GetPointTypeByName failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "DeletePoint from: %+v", deletePointForm)
+
+	// judge user
+	userToken := c.GetString(helper.UserToken)
+	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.WARNING, "DeletePoint GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	userStrokeList, err := transform.StringToStrokeList(userInfo.Strokes)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "DeletePoint StringToStrokeList failed, err: %v, userToken: %v", err, userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if userStrokeList == nil || userStrokeList.DefaultStroke == 0 {
+		helper.FormatLogPrint(helper.WARNING, "DeletePoint user don't have default stroke, userToken: %v", userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	// 存在校验
+	pointInfo, err := mysql.GetPointByPointID(c, nil, deletePointForm.PointID, pointType, userStrokeList.DefaultStroke)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "DeletePoint GetPointByPointID failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if pointInfo.Status == helper.PointDeleteStatus {
+		helper.FormatLogPrint(helper.WARNING, "DeletePoint pointInfo already deleted, pointToken: %v", pointInfo.PointToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	// get stroke info
+	strokeInfos, err := mysql.MGetStrokeByID(c, nil, []int64{userStrokeList.DefaultStroke})
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "DeletePoint MGetStrokeByID failed, err: %v, id: %d", err, userStrokeList.DefaultStroke)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	strokeInfo := strokeInfos[0]
+	pointList, err := transform.StringToPointList(strokeInfo.PointsList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "AddPoint StringToPointList failed, pointList: %v", strokeInfo.PointsList)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	// delete point
+	outPut, err := deleteStrokePointList(c, strokeInfo, pointList, pointInfo)
 	if err != nil {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return

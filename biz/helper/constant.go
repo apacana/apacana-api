@@ -46,6 +46,11 @@ const (
 	StrokeDeleteStatus = uint8(8)
 )
 
+const (
+	PointNormalStatus = uint8(0)
+	PointDeleteStatus = uint8(8)
+)
+
 var (
 	ErrStrokeOutOfLimit = errors.New("ErrStrokeOutOfLimit")
 	ErrInvaildCookie    = errors.New("ErrInvaildCookie")

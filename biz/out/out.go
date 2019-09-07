@@ -18,6 +18,12 @@ type DefaultStrokeOut struct {
 	UpdateTime  string          `json:"update_time"`
 }
 
+type StrokeUpdateOut struct {
+	StrokeToken string `json:"stroke_token"`
+	StrokeName  string `json:"stroke_name"`
+	UpdateTime  string `json:"update_time"`
+}
+
 type StrokeInfoOut struct {
 	StrokeToken string `json:"stroke_token"`
 	StrokeName  string `json:"stroke_name"`

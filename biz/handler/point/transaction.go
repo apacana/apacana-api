@@ -73,8 +73,16 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 		IconColor:  pointInfo.IconColor,
 		Ext:        pointInfo.Ext,
 	}
+
+	// update stroke
+	pointList.PointList = append(pointList.PointList, pointInfo.ID)
+	err = mysql.UpdateStrokeByToken(c, tx, strokeInfo.StrokeToken, map[string]interface{}{
+		"points_list": *transform.PackPointList(pointList),
+		"update_time": nowTime,
+	})
+
 	outPut = map[string]interface{}{
-		"stroke_info": out.DefaultStrokeOut{
+		"stroke_info": out.StrokeUpdateOut{
 			StrokeToken: strokeInfo.StrokeToken,
 			StrokeName:  strokeInfo.StrokeName,
 			UpdateTime:  nowTime,
@@ -82,11 +90,103 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 		"point_info": pointInfoOut,
 	}
 
+	return
+}
+
+func deleteStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList *transform.PointList, pointInfo *mysql.PointInfo) (outPut map[string]interface{}, err error) {
+	tx := mysql.DB.Begin()
+	defer func() {
+		if err == nil {
+			err = tx.Commit().Error
+		}
+		if err != nil {
+			if r := tx.Rollback(); r.Error != nil {
+				helper.FormatLogPrint(helper.ERROR, "deleteStrokePointList failed, err: %v", err)
+			}
+		}
+	}()
+
+	// set point delete
+	nowTime := time.Now().Format("2006-01-02 15:04:05")
+	err = mysql.UpdatePointByID(c, tx, pointInfo.ID, map[string]interface{}{
+		"status":      helper.PointDeleteStatus,
+		"update_time": nowTime,
+	})
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "deleteStrokePointList UpdatePointByID failed, err: %v", err)
+		return
+	}
+
+	// update stroke
+	pointList.PointList = helper.ArrayRemove(pointList.PointList, pointInfo.ID)
+	err = mysql.UpdateStrokeByToken(c, tx, strokeInfo.StrokeToken, map[string]interface{}{
+		"points_list": *transform.PackPointList(pointList),
+		"update_time": nowTime,
+	})
+
+	outPut = map[string]interface{}{
+		"stroke_info": out.StrokeUpdateOut{
+			StrokeToken: strokeInfo.StrokeToken,
+			StrokeName:  strokeInfo.StrokeName,
+			UpdateTime:  nowTime,
+		},
+	}
+
+	return
+}
+
+func recreateStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList *transform.PointList, pointInfo *mysql.PointInfo) (outPut map[string]interface{}, err error) {
+	tx := mysql.DB.Begin()
+	defer func() {
+		if err == nil {
+			err = tx.Commit().Error
+		}
+		if err != nil {
+			if r := tx.Rollback(); r.Error != nil {
+				helper.FormatLogPrint(helper.ERROR, "recreateStrokePointList failed, err: %v", err)
+			}
+		}
+	}()
+
+	// update point
+	nowTime := time.Now().Format("2006-01-02 15:04:05")
+	err = mysql.UpdatePointByID(c, tx, pointInfo.ID, map[string]interface{}{
+		"status":      helper.PointNormalStatus,
+		"update_time": nowTime,
+	})
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "recreateStrokePointList UpdatePointByID failed, err: %v", err)
+		return
+	}
+	pointTypeName, _ := helper.GetNameByPointType(pointInfo.PointType)
+	pointInfoOut := &out.PointInfoOut{
+		PointToken: pointInfo.PointToken,
+		PointID:    pointInfo.PointID,
+		PointType:  pointTypeName,
+		Text:       pointInfo.Text,
+		PlaceName:  pointInfo.PlaceName,
+		Center:     pointInfo.Center,
+		Comment:    pointInfo.Comment,
+		IconType:   pointInfo.IconType,
+		IconColor:  pointInfo.IconColor,
+		Ext:        pointInfo.Ext,
+	}
+
+	// update stroke
 	pointList.PointList = append(pointList.PointList, pointInfo.ID)
 	err = mysql.UpdateStrokeByToken(c, tx, strokeInfo.StrokeToken, map[string]interface{}{
 		"points_list": *transform.PackPointList(pointList),
 		"update_time": nowTime,
 	})
+
+	outPut = map[string]interface{}{
+		"stroke_info": out.StrokeUpdateOut{
+			StrokeToken: strokeInfo.StrokeToken,
+			StrokeName:  strokeInfo.StrokeName,
+			UpdateTime:  nowTime,
+		},
+		"point_info": pointInfoOut,
+	}
 
 	return
 }

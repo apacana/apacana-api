@@ -1,8 +1,10 @@
 package mysql
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	"strconv"
 )
 
 type PointInfo struct {
@@ -44,7 +46,15 @@ func MGetPointByID(c *gin.Context, tx *gorm.DB, IDs []int64) ([]*PointInfo, erro
 		tx = DB
 	}
 	var ref []*PointInfo
-	r := tx.Model(&PointInfo{}).Where("id in (?)", IDs).Find(&ref)
+	idOrderFiled := "FIELD(id,"
+	for i, id := range IDs {
+		idOrderFiled += strconv.FormatInt(id, 10)
+		if i != len(IDs)-1 {
+			idOrderFiled += ","
+		}
+	}
+	idOrderFiled += ")"
+	r := tx.Model(&PointInfo{}).Where("id in (?)", IDs).Order(idOrderFiled).Find(&ref)
 	if r.Error != nil {
 		return nil, r.Error
 	}
@@ -63,26 +73,31 @@ func GetPointByToken(c *gin.Context, tx *gorm.DB, pointToken string) (*PointInfo
 	return ref, nil
 }
 
-func AllowAddPoint(c *gin.Context, tx *gorm.DB, pointID string, pointType PointType, strokeID int64) (bool, error) {
+func GetPointByPointID(c *gin.Context, tx *gorm.DB, pointID string, pointType PointType, strokeID int64) (*PointInfo, error) {
 	if tx == nil {
 		tx = DB
 	}
 	var ref []*PointInfo
 	r := tx.Model(&PointInfo{}).Where("stroke_id = ?", strokeID).Find(&ref)
 	if r.Error != nil {
-		if r.Error == gorm.ErrRecordNotFound {
-			return true, nil
-		}
-		return false, r.Error
+		return nil, r.Error
 	}
 	for _, point := range ref {
 		if point.PointID == pointID && point.PointType == pointType {
-			return false, nil
+			return point, nil
 		}
 	}
-	return true, r.Error
+	return nil, errors.New("data not found")
 }
 
 func InsertPointInfo(c *gin.Context, tx *gorm.DB, pointInfo *PointInfo) error {
 	return Insert(tx, pointInfo)
+}
+
+func UpdatePointByID(c *gin.Context, tx *gorm.DB, pointID int64, attrs map[string]interface{}) error {
+	if tx == nil {
+		tx = DB
+	}
+	r := tx.Model(&PointInfo{}).Where("id = ?", pointID).Update(attrs)
+	return r.Error
 }

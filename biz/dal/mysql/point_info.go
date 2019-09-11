@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"strconv"
@@ -87,7 +86,7 @@ func GetPointByPointID(c *gin.Context, tx *gorm.DB, pointID string, pointType Po
 			return point, nil
 		}
 	}
-	return nil, errors.New("data not found")
+	return nil, gorm.ErrRecordNotFound
 }
 
 func InsertPointInfo(c *gin.Context, tx *gorm.DB, pointInfo *PointInfo) error {

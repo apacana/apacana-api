@@ -99,7 +99,7 @@ func AddPoint(c *gin.Context) {
 
 	// 唯一性校验
 	pointInfo, err := mysql.GetPointByPointID(c, nil, addPointForm.PointID, pointType, defaultStrokeID)
-	if err != nil {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		helper.FormatLogPrint(helper.ERROR, "AddPoint GetPointByPointID failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return

@@ -21,7 +21,7 @@ func CreateStroke(c *gin.Context) {
 	}
 	helper.FormatLogPrint(helper.LOG, "CreateStroke from: %+v", createStrokeForm)
 	strokeName := config.DefaultStrokeName
-	if createStrokeForm.StrokeName != nil && len(*createStrokeForm.StrokeName) < 24 {
+	if createStrokeForm.StrokeName != nil && len(*createStrokeForm.StrokeName) < 24 && len(*createStrokeForm.StrokeName) > 0 {
 		strokeName = *createStrokeForm.StrokeName
 	}
 

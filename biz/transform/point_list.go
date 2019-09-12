@@ -43,6 +43,9 @@ func CreateFmtPointList(c *gin.Context, pointsStr string) ([]*out.PointInfoOut, 
 		return nil, errors.New("CreateFmtPointList failed")
 	}
 
+	if len(pointList.PointList) == 0 {
+		return make([]*out.PointInfoOut, 0), nil
+	}
 	pointInfos, err := mysql.MGetPointByID(c, nil, pointList.PointList)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateFmtPointList MGetPointByID failed, err: %v", err)

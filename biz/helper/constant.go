@@ -47,6 +47,12 @@ const (
 )
 
 const (
+	RouteNormalStatus = uint8(0)
+	RouteOpenStatus   = uint8(1)
+	RouteDeleteStatus = uint8(8)
+)
+
+const (
 	PointNormalStatus = uint8(0)
 	PointDeleteStatus = uint8(8)
 )

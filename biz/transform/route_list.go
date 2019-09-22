@@ -52,6 +52,7 @@ func CreateFmtRouteList(c *gin.Context, routesStr string) ([]*out.RouteInfoOut, 
 		routeListOut = append(routeListOut, &out.RouteInfoOut{
 			RouteToken: routeInfo.RouteToken,
 			RouteName:  routeInfo.RouteName,
+			Status:     routeInfo.Status,
 		})
 	}
 	return routeListOut, nil

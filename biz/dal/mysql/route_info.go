@@ -11,6 +11,7 @@ type RouteInfo struct {
 	RouteName  string `gorm:"route_name" json:"route_name"`
 	PointsList string `gorm:"points_list" json:"points_list"`
 	StrokeID   int64  `gorm:"stroke_id" json:"stroke_id"`
+	OwnerId    int64  `gorm:"owner_id" json:"user_id"`
 	Status     uint8  `gorm:"status" json:"status"`
 	CreateTime string `gorm:"create_time" json:"create_time"`
 	UpdateTime string `gorm:"update_time" json:"update_time"`
@@ -46,6 +47,14 @@ func GetRouteByToken(c *gin.Context, tx *gorm.DB, routeToken string) (*RouteInfo
 		return nil, r.Error
 	}
 	return ref, nil
+}
+
+func UpdateRouteByToken(c *gin.Context, tx *gorm.DB, routeToken string, attrs map[string]interface{}) error {
+	if tx == nil {
+		tx = DB
+	}
+	r := tx.Model(&RouteInfo{}).Where("route_token = ?", routeToken).Update(attrs)
+	return r.Error
 }
 
 func InsertRouteInfo(c *gin.Context, tx *gorm.DB, routeInfo *RouteInfo) error {

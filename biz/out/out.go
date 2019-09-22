@@ -37,8 +37,18 @@ type StrokesInfoOut struct {
 /*Route*/
 
 type RouteInfoOut struct {
-	RouteToken string `json:"route_token"`
-	RouteName  string `json:"route_name"`
+	RouteToken     string        `json:"route_token"`
+	RouteName      string        `json:"route_name"`
+	Status         uint8         `json:"status"`
+	RoutePointList []*RoutePoint `json:"route_point"`
+	UpdateTime     string        `json:"update_time"`
+}
+
+type RoutePoint struct {
+	PointID   string `json:"point_id"`
+	PointType string `json:"point_type"`
+	Text      string `json:"text"`
+	Direction string `json:"direction"`
 }
 
 /*Point*/

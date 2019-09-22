@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *transform.RouteList, routeName string) (routeToken string, err error) {
+func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *transform.RouteList, routeName string) (routeToken string, nowTime string, err error) {
 	tx := mysql.DB.Begin()
 	defer func() {
 		if err == nil {
@@ -22,12 +22,13 @@ func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *
 	}()
 
 	// create route
-	nowTime := time.Now().Format("2006-01-02 15:04:05")
+	nowTime = time.Now().Format("2006-01-02 15:04:05")
 	routeToken = helper.GenerateToken([]byte{'r', 'o', 'u', 't', 'e'}, "")
 	err = mysql.InsertRouteInfo(c, tx, &mysql.RouteInfo{
 		RouteToken: routeToken,
 		RouteName:  routeName,
 		StrokeID:   strokeInfo.ID,
+		OwnerId:    strokeInfo.OwnerID,
 		CreateTime: nowTime,
 		UpdateTime: nowTime,
 	})

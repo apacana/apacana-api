@@ -8,4 +8,5 @@ const (
 
 const (
 	DefaultStrokeName = "default itinerary"
+	DefaultRouteName  = "default route"
 )

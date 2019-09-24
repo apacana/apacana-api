@@ -80,6 +80,7 @@ func CreateRoute(c *gin.Context) {
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, &out.RouteInfoOut{
 		RouteToken: routeToken,
 		RouteName:  routeName,
+		Status:     helper.RouteOpenStatus,
 		UpdateTime: updateTime,
 	})
 }
@@ -182,6 +183,7 @@ func GetRoute(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
+	helper.FormatLogPrint(helper.LOG, "GetRoute parm: %+v", routeToken)
 
 	userToken := c.GetString(helper.UserToken)
 	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
@@ -198,6 +200,10 @@ func GetRoute(c *gin.Context) {
 	routeInfo, err := mysql.GetRouteByToken(c, nil, routeToken)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "GetRoute GetRouteByToken failed, routeToken: %v", routeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if routeInfo == nil {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
@@ -227,7 +233,7 @@ func GetRoute(c *gin.Context) {
 
 	routePointListOut, err := transform.CreateFmtRoutePointList(c, routeInfo.PointsList)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "GetRoute CreateFmtRoutePointList failed, pointList: %v", routeInfo.PointsList)
+		helper.FormatLogPrint(helper.ERROR, "GetRoute CreateFmtRoutePointList failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}

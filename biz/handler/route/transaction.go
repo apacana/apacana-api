@@ -29,6 +29,7 @@ func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *
 		RouteName:  routeName,
 		StrokeID:   strokeInfo.ID,
 		OwnerId:    strokeInfo.OwnerID,
+		Status:     helper.RouteOpenStatus,
 		CreateTime: nowTime,
 		UpdateTime: nowTime,
 	})

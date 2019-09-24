@@ -44,6 +44,9 @@ func CreateFmtRoutePointList(c *gin.Context, routePointStr string) ([]*out.Route
 		return nil, errors.New("CreateFmtRoutePointList failed")
 	}
 	routePointOut := make([]*out.RoutePoint, len(routePointList.PointList))
+	if len(routePointOut) == 0 {
+		return routePointOut, nil
+	}
 
 	pointList, err := mysql.MGetPointByID(c, nil, routePointList.PointList)
 	if err != nil {

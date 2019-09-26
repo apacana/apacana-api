@@ -329,3 +329,56 @@ func CloseRoute(c *gin.Context) {
 
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, nil)
 }
+
+func OpenRoute(c *gin.Context) {
+	var openRouteForm OpenRouteForm
+	if err := c.ShouldBindJSON(&openRouteForm); err != nil || openRouteForm.RouteToken == "" {
+		helper.FormatLogPrint(helper.WARNING, "OpenRoute bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "OpenRouteForm from: %+v", openRouteForm)
+
+	routeToken := openRouteForm.RouteToken
+	userToken := c.GetString(helper.UserToken)
+	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "OpenRoute GetUserInfoByToken failed, userInfo: %v", userInfo)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if userInfo.Status == helper.TransferredStatus {
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
+	}
+
+	routeInfo, err := mysql.GetRouteByToken(c, nil, routeToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "OpenRoute GetRouteByToken failed, routeToken: %v", routeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if routeInfo.Status == helper.RouteDeleteStatus {
+		helper.FormatLogPrint(helper.LOG, "OpenRoute Route has deleted, routeToken: %v", routeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeMountDeleted, nil)
+		return
+	}
+
+	// route鉴权
+	if routeInfo.OwnerId != userInfo.ID {
+		helper.BizResponse(c, http.StatusOK, helper.CodeForbidden, nil)
+		return
+	}
+
+	// update status
+	nowTime := time.Now().Format("2006-01-02 15:04:05")
+	err = mysql.UpdateRouteByToken(c, nil, routeToken, map[string]interface{}{
+		"status":      helper.RouteOpenStatus,
+		"update_time": nowTime,
+	})
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "OpenRoute UpdateRouteByToken failed, err: %v", err)
+	}
+
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, nil)
+}

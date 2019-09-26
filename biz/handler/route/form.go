@@ -14,3 +14,7 @@ type AddRoutePointForm struct {
 type CloseRouteForm struct {
 	RouteToken string `json:"route_token" binding:"required"`
 }
+
+type OpenRouteForm struct {
+	RouteToken string `json:"route_token" binding:"required"`
+}

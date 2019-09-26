@@ -72,7 +72,8 @@ func CreateRoute(c *gin.Context) {
 	}
 
 	// insert route
-	routeToken, updateTime, err := createStrokeRoute(c, strokeInfo, routeList, routeName)
+	routeColor := helper.CreateRandomColor()
+	routeToken, updateTime, err := createStrokeRoute(c, strokeInfo, routeList, routeName, routeColor)
 	if err != nil {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
@@ -80,6 +81,7 @@ func CreateRoute(c *gin.Context) {
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, &out.RouteInfoOut{
 		RouteToken: routeToken,
 		RouteName:  routeName,
+		RouteColor: routeColor,
 		Status:     helper.RouteOpenStatus,
 		UpdateTime: updateTime,
 	})
@@ -161,7 +163,32 @@ func AddRoutePoint(c *gin.Context) {
 		return
 	}
 	routePointList.PointList = append(routePointList.PointList, pointInfo.ID)
-	routePointList.DirectionList = append(routePointList.DirectionList, 0)
+
+	// update direction
+	var directionID int64 = 0
+	if addRoutePointForm.Direction != nil {
+		nowTime := time.Now().Format("2006-01-02 15:04:05")
+		directToken := helper.GenerateToken([]byte{'d', 'i', 'r', 'e', 'c', 't'}, "")
+		err := mysql.InsertRouteDirection(c, nil, &mysql.RouteDirection{
+			DirectionToken: directToken,
+			Direction:      *addRoutePointForm.Direction,
+			RouteID:        routeInfo.ID,
+			Version:        "v1",
+			CreateTime:     nowTime,
+			UpdateTime:     nowTime,
+		})
+		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "AddRoutePoint InsertRouteDirection failed, err: %v", err)
+		} else {
+			directionInfo, err := mysql.GetDirectionByToken(c, nil, directToken)
+			if err != nil {
+				helper.FormatLogPrint(helper.ERROR, "AddRoutePoint GetDirectionByToken failed, err: %v", err)
+			} else {
+				directionID = directionInfo.ID
+			}
+		}
+	}
+	routePointList.DirectionList = append(routePointList.DirectionList, directionID)
 
 	nowTime := time.Now().Format("2006-01-02 15:04:05")
 	err = mysql.UpdateRouteByToken(c, nil, routeInfo.RouteToken, map[string]interface{}{
@@ -174,7 +201,9 @@ func AddRoutePoint(c *gin.Context) {
 		return
 	}
 
-	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, nil)
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+		"update_time": nowTime,
+	})
 }
 
 func GetRoute(c *gin.Context) {
@@ -240,6 +269,7 @@ func GetRoute(c *gin.Context) {
 	routeInfoOut := &out.RouteInfoOut{
 		RouteToken:     routeInfo.RouteToken,
 		RouteName:      routeInfo.RouteName,
+		RouteColor:     routeInfo.RouteColor,
 		Status:         helper.RouteOpenStatus,
 		RoutePointList: routePointListOut,
 	}

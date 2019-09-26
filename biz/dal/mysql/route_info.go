@@ -9,6 +9,7 @@ type RouteInfo struct {
 	ID         int64  `gorm:"id" json:"id"`
 	RouteToken string `gorm:"route_token" json:"route_token"`
 	RouteName  string `gorm:"route_name" json:"route_name"`
+	RouteColor string `gorm:"route_color" json:"route_color"`
 	PointsList string `gorm:"points_list" json:"points_list"`
 	StrokeID   int64  `gorm:"stroke_id" json:"stroke_id"`
 	OwnerId    int64  `gorm:"owner_id" json:"user_id"`

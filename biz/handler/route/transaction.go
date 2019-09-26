@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *transform.RouteList, routeName string) (routeToken string, nowTime string, err error) {
+func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *transform.RouteList, routeName string, routeColor string) (routeToken string, nowTime string, err error) {
 	tx := mysql.DB.Begin()
 	defer func() {
 		if err == nil {
@@ -27,6 +27,7 @@ func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *
 	err = mysql.InsertRouteInfo(c, tx, &mysql.RouteInfo{
 		RouteToken: routeToken,
 		RouteName:  routeName,
+		RouteColor: routeColor,
 		StrokeID:   strokeInfo.ID,
 		OwnerId:    strokeInfo.OwnerID,
 		Status:     helper.RouteOpenStatus,

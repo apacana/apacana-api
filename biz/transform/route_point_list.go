@@ -48,20 +48,30 @@ func CreateFmtRoutePointList(c *gin.Context, routePointStr string) ([]*out.Route
 		return routePointOut, nil
 	}
 
-	pointList, err := mysql.MGetPointByID(c, nil, routePointList.PointList)
+	pointMap, _, err := mysql.MGetPointByID(c, nil, routePointList.PointList)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateFmtRoutePointList MGetPointByID failed, err: %v", err)
 		return nil, errors.New("CreateFmtRoutePointList failed")
 	}
+	directionMap, err := mysql.MGetRouteDirectionByID(c, nil, routePointList.DirectionList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "CreateFmtRoutePointList MGetRouteDirectionByID failed, err: %v", err)
+		return nil, errors.New("CreateFmtRoutePointList failed")
+	}
 
 	for index, id := range routePointList.PointList {
-		point := pointList[id]
+		point := pointMap[id]
 		pointTypeName, _ := helper.GetNameByPointType(point.PointType)
+		direction := ""
+		if direct, ok := directionMap[routePointList.DirectionList[index]]; ok {
+			direction = direct.Direction
+		}
 		routePointOut[index] = &out.RoutePoint{
 			PointID:   point.PointID,
 			PointType: pointTypeName,
 			Text:      point.Text,
-			Direction: "",
+			Center:    point.Center,
+			Direction: direction,
 		}
 	}
 

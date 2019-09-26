@@ -40,7 +40,7 @@ func (a *PointInfo) TableName() string {
 	return PointInfoTableName
 }
 
-func MGetPointByID(c *gin.Context, tx *gorm.DB, IDs []int64) (map[int64]*PointInfo, error) {
+func MGetPointByID(c *gin.Context, tx *gorm.DB, IDs []int64) (map[int64]*PointInfo, []*PointInfo, error) {
 	if tx == nil {
 		tx = DB
 	}
@@ -55,14 +55,14 @@ func MGetPointByID(c *gin.Context, tx *gorm.DB, IDs []int64) (map[int64]*PointIn
 	idOrderFiled += ")"
 	r := tx.Model(&PointInfo{}).Where("id in (?)", IDs).Order(idOrderFiled).Find(&ref)
 	if r.Error != nil {
-		return nil, r.Error
+		return nil, nil, r.Error
 	}
 
 	refMap := make(map[int64]*PointInfo, 0)
 	for _, info := range ref {
 		refMap[info.ID] = info
 	}
-	return refMap, nil
+	return refMap, ref, nil
 }
 
 func GetPointByToken(c *gin.Context, tx *gorm.DB, pointToken string) (*PointInfo, error) {

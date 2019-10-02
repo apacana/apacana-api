@@ -1,12 +1,15 @@
 package hotel
 
 import (
+	"fmt"
 	"github.com/apacana/apacana-api/biz/dal/mysql"
 	"github.com/apacana/apacana-api/biz/helper"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 func GetAgodaHotel(c *gin.Context) {
@@ -42,8 +45,6 @@ func SearchHotel(c *gin.Context) {
 	}
 	helper.FormatLogPrint(helper.LOG, "SearchHotel from: %+v", searchAgodaHotelForm)
 
-	lat := searchAgodaHotelForm.Latitude
-	lng := searchAgodaHotelForm.Longitude
 	maxResult := "30"
 	searchRadius := "1"
 	if searchAgodaHotelForm.MaxResult != nil {
@@ -58,10 +59,10 @@ func SearchHotel(c *gin.Context) {
 		"apiRequest.criteria.additional.language=zh-cn&" +
 		"apiRequest.criteria.additional.discountOnly=false&" +
 		"apiRequest.criteria.additional.currency=CNY&" +
-		"apiRequest.criteria.checkInDate=2019-12-09&" +
-		"apiRequest.criteria.checkOutDate=2019-12-10&" +
-		"apiRequest.criteria.geo.latitude=" + lat + "&" +
-		"apiRequest.criteria.geo.longitude=" + lng + "&" +
+		"apiRequest.criteria.checkInDate=" + searchAgodaHotelForm.CheckInData + "&" +
+		"apiRequest.criteria.checkOutDate=" + searchAgodaHotelForm.CheckOutData + "&" +
+		"apiRequest.criteria.geo.latitude=" + searchAgodaHotelForm.Latitude + "&" +
+		"apiRequest.criteria.geo.longitude=" + searchAgodaHotelForm.Longitude + "&" +
 		"apiRequest.criteria.geo.searchRadius=" + searchRadius + "&" +
 		"apiRequest.criteria.additional.occupancy.numberOfRoom=1&" +
 		"apiRequest.criteria.additional.occupancy.numberOfAdult=2&" +
@@ -85,4 +86,58 @@ func SearchHotel(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 	}
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, string(body))
+}
+
+func SearchHotelBooking(c *gin.Context) {
+	var agodaHotelBookingForm AgodaHotelBookingForm
+	if err := c.ShouldBindJSON(&agodaHotelBookingForm); err != nil {
+		helper.FormatLogPrint(helper.WARNING, "SearchHotel bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "SearchHotelBooking from: %+v", agodaHotelBookingForm)
+
+	body := "{" +
+		"\"criteria\": {" +
+		"\"additional\": {" +
+		"\"currency\": \"CNY\"," +
+		"\"discountOnly\": false," +
+		"\"language\": \"zh-cn\"," +
+		"\"occupancy\": {" +
+		"\"numberOfAdult\": 2," +
+		"\"numberOfChildren\": 0}}," +
+		"\"checkInDate\": \"" + agodaHotelBookingForm.CheckInDate + "\"," +
+		"\"checkOutDate\": \"" + agodaHotelBookingForm.CheckOutDate + "\"," +
+		"\"hotelId\": ["
+	for _, hotelID := range agodaHotelBookingForm.HotelIDs {
+		body += strconv.FormatInt(hotelID, 10)
+	}
+	body += "]}}"
+	bodyReader := strings.NewReader(body)
+	req, err := http.NewRequest("POST", "http://affiliateapi7643.agoda.com/affiliateservice/lt_v1", bodyReader)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "1831827:836ddc58-5e3a-4ffd-ad52-f5154315c7df")
+	clt := http.Client{}
+	resp, err := clt.Do(req)
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "SearchHotelBooking close http body failed, err: %v", err)
+		}
+	}()
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "SearchHotelBooking http request failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "SearchHotelBooking http read body failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+	}
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, string(respBody))
 }

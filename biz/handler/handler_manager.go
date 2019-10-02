@@ -25,8 +25,9 @@ func SetupRouter(r *gin.Engine) {
 		{
 			ApiHotelAgoda := ApiHotel.Group("/agoda/")
 			{
-				ApiHotelAgoda.POST("/get/", hotel.GetAgodaHotel)  // 获得agoda酒店数据
-				ApiHotelAgoda.POST("/search/", hotel.SearchHotel) // 搜索agoda酒店数据
+				ApiHotelAgoda.POST("/get/", hotel.GetAgodaHotel)          // 获得agoda酒店数据
+				ApiHotelAgoda.POST("/search/", hotel.SearchHotel)         // 搜索agoda酒店数据
+				ApiHotelAgoda.POST("/booking/", hotel.SearchHotelBooking) // 搜索酒店预订信息
 			}
 		}
 		ApiStroke := Api.Group("/stroke/")

@@ -15,8 +15,7 @@ import (
 func AddPoint(c *gin.Context) {
 	var addPointForm AddPointForm
 	if err := c.ShouldBindJSON(&addPointForm); err != nil ||
-		len(addPointForm.Text) > 100 || len(addPointForm.Center) > 50 ||
-		len(addPointForm.PlaceName) > 300 || len(addPointForm.PointID) > 50 {
+		len(addPointForm.Text) > 100 || len(addPointForm.Center) > 50 || len(addPointForm.PointID) > 50 {
 		helper.FormatLogPrint(helper.WARNING, "AddPoint bind json failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return

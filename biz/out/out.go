@@ -46,11 +46,12 @@ type RouteInfoOut struct {
 }
 
 type RoutePoint struct {
-	PointID   string `json:"point_id"`
-	PointType string `json:"point_type"`
-	Text      string `json:"text"`
-	Direction string `json:"direction"`
-	Center    string `json:"center"`
+	PointID       string `json:"point_id"`
+	PointType     string `json:"point_type"`
+	Text          string `json:"text"`
+	Direction     string `json:"direction"`
+	DirectionType string `json:"direction_type"`
+	Center        string `json:"center"`
 }
 
 /*Point*/

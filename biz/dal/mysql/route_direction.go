@@ -6,18 +6,28 @@ import (
 )
 
 type RouteDirection struct {
-	ID             int64  `gorm:"id" json:"id"`
-	DirectionToken string `gorm:"direction_token" json:"direction_token"`
-	Direction      string `gorm:"direction" json:"direction"`
-	RouteID        int64  `gorm:"stroke_id" json:"route_id"`
-	Version        string `gorm:"version" json:"version"`
-	Status         uint8  `gorm:"status" json:"status"`
-	CreateTime     string `gorm:"create_time" json:"create_time"`
-	UpdateTime     string `gorm:"update_time" json:"update_time"`
+	ID             int64         `gorm:"id" json:"id"`
+	DirectionToken string        `gorm:"direction_token" json:"direction_token"`
+	DirectionType  DirectionType `gorm:"direction_type" json:"direction_type"`
+	Direction      string        `gorm:"direction" json:"direction"`
+	RouteID        int64         `gorm:"stroke_id" json:"route_id"`
+	Version        string        `gorm:"version" json:"version"`
+	Status         uint8         `gorm:"status" json:"status"`
+	CreateTime     string        `gorm:"create_time" json:"create_time"`
+	UpdateTime     string        `gorm:"update_time" json:"update_time"`
 }
 
 const (
 	RouteDirectionTableName = "route_direction"
+)
+
+type DirectionType uint8
+
+const (
+	DirectionType_DRIVINGTRAFFIC DirectionType = 0
+	DirectionType_DRIVING        DirectionType = 1
+	DirectionType_WALKING        DirectionType = 2
+	DirectionType_CYCLING        DirectionType = 3
 )
 
 func (a *RouteDirection) TableName() string {
@@ -51,6 +61,14 @@ func GetDirectionByToken(c *gin.Context, tx *gorm.DB, directionToken string) (*R
 		return nil, r.Error
 	}
 	return ref, nil
+}
+
+func UpdateDirectionByID(c *gin.Context, tx *gorm.DB, id int64, attrs map[string]interface{}) error {
+	if tx == nil {
+		tx = DB
+	}
+	r := tx.Model(&RouteDirection{}).Where("id = ?", id).Update(attrs)
+	return r.Error
 }
 
 func InsertRouteDirection(c *gin.Context, tx *gorm.DB, routeDirection *RouteDirection) error {

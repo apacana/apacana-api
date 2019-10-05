@@ -155,48 +155,9 @@ func AddRoutePoint(c *gin.Context) {
 		return
 	}
 
-	// update route
-	routePointList, err := transform.StringToRoutePointList(routeInfo.PointsList)
+	nowTime, err := addRoutePoint(c, routeInfo, pointInfo, addRoutePointForm)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "AddRoutePoint StringToRoutePointList failed, err: %v", err)
-		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
-		return
-	}
-	routePointList.PointList = append(routePointList.PointList, pointInfo.ID)
-
-	// update direction
-	var directionID int64 = 0
-	if addRoutePointForm.Direction != nil {
-		nowTime := time.Now().Format("2006-01-02 15:04:05")
-		directToken := helper.GenerateToken([]byte{'d', 'i', 'r', 'e', 'c', 't'}, "")
-		err := mysql.InsertRouteDirection(c, nil, &mysql.RouteDirection{
-			DirectionToken: directToken,
-			Direction:      *addRoutePointForm.Direction,
-			RouteID:        routeInfo.ID,
-			Version:        "v1",
-			CreateTime:     nowTime,
-			UpdateTime:     nowTime,
-		})
-		if err != nil {
-			helper.FormatLogPrint(helper.ERROR, "AddRoutePoint InsertRouteDirection failed, err: %v", err)
-		} else {
-			directionInfo, err := mysql.GetDirectionByToken(c, nil, directToken)
-			if err != nil {
-				helper.FormatLogPrint(helper.ERROR, "AddRoutePoint GetDirectionByToken failed, err: %v", err)
-			} else {
-				directionID = directionInfo.ID
-			}
-		}
-	}
-	routePointList.DirectionList = append(routePointList.DirectionList, directionID)
-
-	nowTime := time.Now().Format("2006-01-02 15:04:05")
-	err = mysql.UpdateRouteByToken(c, nil, routeInfo.RouteToken, map[string]interface{}{
-		"update_time": nowTime,
-		"points_list": *transform.PackRoutePointList(routePointList),
-	})
-	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "AddRoutePoint UpdateRouteByToken failed, err: %v", err)
+		helper.FormatLogPrint(helper.WARNING, "AddRoutePoint addRoutePoint failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
@@ -381,4 +342,71 @@ func OpenRoute(c *gin.Context) {
 	}
 
 	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, nil)
+}
+
+func UpdateDirection(c *gin.Context) {
+	var updateDirectionForm UpdateDirectionForm
+	if err := c.ShouldBindJSON(&updateDirectionForm); err != nil {
+		helper.FormatLogPrint(helper.WARNING, "UpdateDirection bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "UpdateDirection from: %+v", updateDirectionForm)
+
+	// judge user
+	userToken := c.GetString(helper.UserToken)
+	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "UpdateDirection GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	if userInfo.Status == helper.TransferredStatus {
+		helper.FormatLogPrint(helper.WARNING, "UpdateDirection Invalid User, token: %v", userInfo.Token)
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
+	}
+
+	// judge route and point
+	routeInfo, err := mysql.GetRouteByToken(c, nil, updateDirectionForm.RouteToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "UpdateDirection GetRouteByToken failed, err: %v, routeToken: %v", err, updateDirectionForm.RouteToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if routeInfo.Status == helper.RouteDeleteStatus {
+		helper.FormatLogPrint(helper.LOG, "UpdateDirection Route has deleted, routeToken: %v", updateDirectionForm.RouteToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeMountDeleted, nil)
+		return
+	}
+
+	// route鉴权
+	if routeInfo.OwnerId != userInfo.ID {
+		helper.BizResponse(c, http.StatusOK, helper.CodeForbidden, nil)
+		return
+	}
+
+	strokeList, err := transform.StringToStrokeList(userInfo.Strokes)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "UpdateDirection StringToStrokeList failed, strokes: %v", userInfo.Strokes)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if strokeList.DefaultStroke != routeInfo.StrokeID {
+		helper.FormatLogPrint(helper.WARNING, "UpdateDirection want to change with not default stroke")
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	nowTime, err := updateDirection(c, routeInfo, updateDirectionForm)
+	if err != nil {
+		helper.FormatLogPrint(helper.WARNING, "UpdateDirection updateDirection failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+		"update_time": nowTime,
+	})
 }

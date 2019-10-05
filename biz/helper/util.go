@@ -12,13 +12,25 @@ var pointTypeByName = map[string]mysql.PointType{
 	"agoda_hotel":  mysql.PointType_AGODA_HOTEL,
 }
 
+var directionTypeByName = map[string]mysql.DirectionType{
+	"driving-traffic": mysql.DirectionType_DRIVINGTRAFFIC,
+	"driving":         mysql.DirectionType_DRIVING,
+	"walking":         mysql.DirectionType_WALKING,
+	"cycling":         mysql.DirectionType_CYCLING,
+}
+
 var nameByPointType = map[mysql.PointType]string{}
+
+var nameByDirectionType = map[mysql.DirectionType]string{}
 
 var randomColorList = make([]string, 0)
 
 func init() {
 	for mp, n := range pointTypeByName {
 		nameByPointType[n] = mp
+	}
+	for mp, n := range directionTypeByName {
+		nameByDirectionType[n] = mp
 	}
 	randomColorList = []string{
 		"#3F51B5",
@@ -45,9 +57,25 @@ func GetPointTypeByName(name string) (mysql.PointType, error) {
 	}
 }
 
+func GetDirectionTypeByName(name string) (mysql.DirectionType, error) {
+	if value, ok := directionTypeByName[name]; !ok {
+		return mysql.DirectionType_DRIVINGTRAFFIC, fmt.Errorf("unknown point type name: %s", name)
+	} else {
+		return value, nil
+	}
+}
+
 func GetNameByPointType(pointType mysql.PointType) (string, error) {
 	if value, ok := nameByPointType[pointType]; !ok {
 		return "", fmt.Errorf("unknown point type: %d", pointType)
+	} else {
+		return value, nil
+	}
+}
+
+func GetNameByDirectionType(directionType mysql.DirectionType) (string, error) {
+	if value, ok := nameByDirectionType[directionType]; !ok {
+		return "", fmt.Errorf("unknown point type: %d", directionType)
 	} else {
 		return value, nil
 	}

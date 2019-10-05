@@ -38,11 +38,12 @@ func SetupRouter(r *gin.Engine) {
 		}
 		ApiRoute := Api.Group("/route/")
 		{
-			ApiRoute.POST("/create/", route.CreateRoute)      // 新建路线
-			ApiRoute.GET("/:routeToken/", route.GetRoute)     // 获取路线信息
-			ApiRoute.POST("/open/", route.OpenRoute)          // 添加路线关注
-			ApiRoute.POST("/close/", route.CloseRoute)        // 关闭路线关注
-			ApiRoute.POST("/add_point/", route.AddRoutePoint) // 新增路线点
+			ApiRoute.POST("/create/", route.CreateRoute)               // 新建路线
+			ApiRoute.GET("/:routeToken/", route.GetRoute)              // 获取路线信息
+			ApiRoute.POST("/open/", route.OpenRoute)                   // 添加路线关注
+			ApiRoute.POST("/close/", route.CloseRoute)                 // 关闭路线关注
+			ApiRoute.POST("/add_point/", route.AddRoutePoint)          // 新增路线点
+			ApiRoute.POST("/update_direction/", route.UpdateDirection) // 更新导航路线
 		}
 		ApiPoint := Api.Group("/point/")
 		{

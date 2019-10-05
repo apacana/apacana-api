@@ -63,15 +63,22 @@ func CreateFmtRoutePointList(c *gin.Context, routePointStr string) ([]*out.Route
 		point := pointMap[id]
 		pointTypeName, _ := helper.GetNameByPointType(point.PointType)
 		direction := ""
+		directionType := "driving-traffic"
 		if direct, ok := directionMap[routePointList.DirectionList[index]]; ok {
 			direction = direct.Direction
+			aDirectionType, err := helper.GetNameByDirectionType(direct.DirectionType)
+			if err == nil {
+				directionType = aDirectionType
+			}
 		}
+
 		routePointOut[index] = &out.RoutePoint{
-			PointID:   point.PointID,
-			PointType: pointTypeName,
-			Text:      point.Text,
-			Center:    point.Center,
-			Direction: direction,
+			PointID:       point.PointID,
+			PointType:     pointTypeName,
+			Text:          point.Text,
+			Center:        point.Center,
+			Direction:     direction,
+			DirectionType: directionType,
 		}
 	}
 

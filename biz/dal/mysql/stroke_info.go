@@ -57,6 +57,14 @@ func UpdateStrokeByToken(c *gin.Context, tx *gorm.DB, strokeToken string, attrs 
 	return r.Error
 }
 
+func UpdateStrokeByID(c *gin.Context, tx *gorm.DB, id int64, attrs map[string]interface{}) error {
+	if tx == nil {
+		tx = DB
+	}
+	r := tx.Model(&StrokeInfo{}).Where("id = ?", id).Update(attrs)
+	return r.Error
+}
+
 func InsertStrokeInfo(c *gin.Context, tx *gorm.DB, strokeInfo *StrokeInfo) error {
 	return Insert(tx, strokeInfo)
 }

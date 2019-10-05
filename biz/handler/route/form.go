@@ -6,9 +6,10 @@ type CreateRouteForm struct {
 }
 
 type AddRoutePointForm struct {
-	RouteToken string  `json:"route_token" binding:"required"`
-	PointToken string  `json:"point_token" binding:"required"`
-	Direction  *string `json:"direction" binding:"omitempty"`
+	RouteToken    string  `json:"route_token" binding:"required"`
+	PointToken    string  `json:"point_token" binding:"required"`
+	DirectionType *string `json:"direction_type" binding:"omitempty"`
+	Direction     *string `json:"direction" binding:"omitempty"`
 }
 
 type CloseRouteForm struct {
@@ -17,4 +18,11 @@ type CloseRouteForm struct {
 
 type OpenRouteForm struct {
 	RouteToken string `json:"route_token" binding:"required"`
+}
+
+type UpdateDirectionForm struct {
+	Index         int     `json:"index" binding:"required"`
+	RouteToken    string  `json:"route_token" binding:"required"`
+	DirectionType *string `json:"direction_type" binding:"omitempty"`
+	Direction     *string `json:"direction" binding:"omitempty"`
 }

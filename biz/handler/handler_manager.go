@@ -35,6 +35,7 @@ func SetupRouter(r *gin.Engine) {
 			ApiStroke.POST("/create/", stroke.CreateStroke)          // 新建行程
 			ApiStroke.GET("/:strokeToken/", stroke.GetStroke)        // 获取行程详细信息
 			ApiStroke.POST("/change/default/", stroke.ChangeDefault) // 更改默认行程
+			ApiStroke.POST("/update/", stroke.UpdateStroke)          // 更新行程信息
 		}
 		ApiRoute := Api.Group("/route/")
 		{
@@ -44,6 +45,7 @@ func SetupRouter(r *gin.Engine) {
 			ApiRoute.POST("/close/", route.CloseRoute)                 // 关闭路线关注
 			ApiRoute.POST("/add_point/", route.AddRoutePoint)          // 新增路线点
 			ApiRoute.POST("/update_direction/", route.UpdateDirection) // 更新导航路线
+			ApiRoute.POST("/update/", route.UpdateRoute)               // 更新路线信息
 		}
 		ApiPoint := Api.Group("/point/")
 		{

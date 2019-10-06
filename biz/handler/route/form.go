@@ -26,3 +26,8 @@ type UpdateDirectionForm struct {
 	DirectionType *string `json:"direction_type" binding:"omitempty"`
 	Direction     *string `json:"direction" binding:"omitempty"`
 }
+
+type UpdateRouteForm struct {
+	RouteToken string  `json:"route_token" binding:"required"`
+	RouteName  *string `json:"route_name" binding:"omitempty"`
+}

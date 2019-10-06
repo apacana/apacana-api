@@ -410,3 +410,67 @@ func UpdateDirection(c *gin.Context) {
 		"update_time": nowTime,
 	})
 }
+
+func UpdateRoute(c *gin.Context) {
+	var updateRouteForm UpdateRouteForm
+	if err := c.ShouldBindJSON(&updateRouteForm); err != nil || updateRouteForm.RouteToken == "" {
+		helper.FormatLogPrint(helper.WARNING, "UpdateRoute bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "UpdateRoute from: %+v", updateRouteForm)
+
+	routeToken := updateRouteForm.RouteToken
+	userToken := c.GetString(helper.UserToken)
+	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "UpdateRoute GetUserInfoByToken failed, userInfo: %v", userInfo)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if userInfo.Status == helper.TransferredStatus {
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
+	}
+
+	routeInfo, err := mysql.GetRouteByToken(c, nil, routeToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "UpdateRoute GetRouteByToken failed, routeToken: %v", routeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if routeInfo.Status == helper.RouteDeleteStatus {
+		helper.FormatLogPrint(helper.LOG, "UpdateRoute Route has deleted, routeToken: %v", routeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeMountDeleted, nil)
+		return
+	}
+
+	// route鉴权
+	if routeInfo.OwnerId != userInfo.ID {
+		helper.BizResponse(c, http.StatusOK, helper.CodeForbidden, nil)
+		return
+	}
+
+	// update status
+	if updateRouteForm.RouteName != nil && len(*updateRouteForm.RouteName) > 0 && len(*updateRouteForm.RouteName) < 24 {
+		routeName := *updateRouteForm.RouteName
+		nowTime := time.Now().Format("2006-01-02 15:04:05")
+		if routeName != routeInfo.RouteName {
+			err := mysql.UpdateRouteByToken(c, nil, routeToken, map[string]interface{}{
+				"route_name":  routeName,
+				"update_time": nowTime,
+			})
+			if err != nil {
+				helper.FormatLogPrint(helper.ERROR, "UpdateRoute UpdateRouteByToken failed, err: %v", err)
+				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+				return
+			}
+			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+				"update_time": nowTime,
+			})
+			return
+		}
+	}
+
+	helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+}

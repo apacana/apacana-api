@@ -227,3 +227,66 @@ func ChangeDefault(c *gin.Context) {
 		RouteList:   routeList,
 	})
 }
+
+func UpdateStroke(c *gin.Context) {
+	var updateStrokeForm UpdateStrokeForm
+	if err := c.ShouldBindJSON(&updateStrokeForm); err != nil {
+		helper.FormatLogPrint(helper.WARNING, "UpdateStroke bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "UpdateStroke from: %+v", updateStrokeForm)
+	userToken := c.GetString(helper.UserToken)
+	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "UpdateStroke GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if userInfo.Status == helper.TransferredStatus {
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
+	}
+
+	strokeToken := updateStrokeForm.StrokeToken
+	strokeInfo, err := mysql.GetStrokeByToken(c, nil, strokeToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "UpdateStroke GetStrokeByToken failed, strokeToken: %v", strokeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if strokeInfo.Status == helper.StrokeDeleteStatus {
+		helper.FormatLogPrint(helper.LOG, "UpdateStroke Stroke is deleted, strokeToken: %v", strokeToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeMountDeleted, nil)
+		return
+	}
+
+	if strokeInfo.OwnerID != userInfo.ID {
+		helper.FormatLogPrint(helper.LOG, "UpdateStroke forbidden, strokeToken: %v, userToken: %v", strokeToken, userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeForbidden, nil)
+		return
+	}
+
+	if updateStrokeForm.StrokeName != nil && len(*updateStrokeForm.StrokeName) > 0 && len(*updateStrokeForm.StrokeName) < 24 {
+		strokeName := *updateStrokeForm.StrokeName
+		nowTime := time.Now().Format("2006-01-02 15:04:05")
+		if strokeName != strokeInfo.StrokeName {
+			err := mysql.UpdateStrokeByToken(c, nil, updateStrokeForm.StrokeToken, map[string]interface{}{
+				"stroke_name": strokeName,
+				"update_time": nowTime,
+			})
+			if err != nil {
+				helper.FormatLogPrint(helper.ERROR, "UpdateStroke UpdateStrokeByToken failed, err: %v", err)
+				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+				return
+			}
+			helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+				"update_time": nowTime,
+			})
+			return
+		}
+	}
+
+	// 默认更新失败
+	helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+}

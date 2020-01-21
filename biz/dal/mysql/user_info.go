@@ -11,6 +11,7 @@ type UserInfo struct {
 	UserName   string `gorm:"user_name" json:"user_name"`
 	PassWord   string `gorm:"pass_word" json:"pass_word"`
 	Name       string `gorm:"name" json:"name"`
+	Center     string `gorm:"center" json:"center"`
 	Strokes    string `gorm:"strokes" json:"strokes"`
 	Status     uint8  `gorm:"status" json:"status"`
 	CreateTime string `gorm:"create_time" json:"create_time"`
@@ -69,6 +70,15 @@ func UpdateUserInfo(c *gin.Context, tx *gorm.DB, id int64, attrs map[string]inte
 	return r.Error
 }
 
-func InsertUserInfo(c *gin.Context, userInfo *UserInfo) error {
-	return Insert(nil, userInfo)
+func UpdateUserInfoByToken(c *gin.Context, tx *gorm.DB, token string, attrs map[string]interface{}) error {
+	if tx == nil {
+		tx = DB
+	}
+	r := tx.Model(&UserInfo{}).Where("token = ?", token).Update(attrs)
+	return r.Error
+}
+
+func InsertUserInfo(c *gin.Context, userInfo *UserInfo) (*UserInfo, error) {
+	err := Insert(nil, userInfo)
+	return userInfo, err
 }

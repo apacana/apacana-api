@@ -41,7 +41,7 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 	}
 	nowTime := time.Now().Format("2006-01-02 15:04:05")
 	pointToken := helper.GenerateToken([]byte{'p', 'o', 'i', 'n', 't'}, "")
-	err = mysql.InsertPointInfo(c, tx, &mysql.PointInfo{
+	pointInfo, err := mysql.InsertPointInfo(c, tx, &mysql.PointInfo{
 		PointToken: pointToken,
 		PointID:    form.PointID,
 		PointType:  pointType,
@@ -58,11 +58,6 @@ func addStrokePointList(c *gin.Context, strokeInfo *mysql.StrokeInfo, pointList 
 	})
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "addStrokePointList InsertPointInfo failed, err: %v", err)
-		return
-	}
-	pointInfo, err := mysql.GetPointByToken(c, tx, pointToken)
-	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "addStrokePointList GetPointByToken failed, err: %v, pointToken: %v", err, pointToken)
 		return
 	}
 	pointInfoOut := &out.PointInfoOut{

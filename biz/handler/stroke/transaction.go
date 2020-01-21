@@ -24,7 +24,7 @@ func CreateUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *tran
 	// create stroke
 	createTime = time.Now().Format("2006-01-02 15:04:05")
 	strokeToken = helper.GenerateToken([]byte{'s', 't', 'r', 'o', 'k', 'e'}, "")
-	err = mysql.InsertStrokeInfo(c, tx, &mysql.StrokeInfo{
+	strokeInfo, err := mysql.InsertStrokeInfo(c, tx, &mysql.StrokeInfo{
 		StrokeToken: strokeToken,
 		StrokeName:  strokeName,
 		OwnerID:     userInfo.ID,
@@ -33,11 +33,6 @@ func CreateUserStroke(c *gin.Context, userInfo *mysql.UserInfo, strokeList *tran
 	})
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "CreateUserStroke InsertStrokeInfo failed, err: %v", err)
-		return
-	}
-	strokeInfo, err := mysql.GetStrokeByToken(c, tx, strokeToken)
-	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "CreateUserStroke GetStrokeByToken failed, err: %v, strokeToken: %v", err, strokeToken)
 		return
 	}
 

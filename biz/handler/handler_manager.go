@@ -20,6 +20,7 @@ func SetupRouter(r *gin.Engine) {
 			ApiUser.GET("/info/", user.GetUserInfo)       // 获取用户信息
 			ApiUser.POST("/register/", user.RegisterUser) // 用户注册
 			ApiUser.POST("/login/", user.LoginUser)       // 用户登录
+			ApiUser.POST("/heart/", user.HeartUser)       // 用户心跳
 		}
 		ApiHotel := Api.Group("/hotel/")
 		{
@@ -46,6 +47,7 @@ func SetupRouter(r *gin.Engine) {
 			ApiRoute.POST("/add_point/", route.AddRoutePoint)          // 新增路线点
 			ApiRoute.POST("/update_direction/", route.UpdateDirection) // 更新导航路线
 			ApiRoute.POST("/update/", route.UpdateRoute)               // 更新路线信息
+			ApiRoute.POST("/remove_point/", route.RemoveRoutePoint)    // 移除路线点
 		}
 		ApiPoint := Api.Group("/point/")
 		{

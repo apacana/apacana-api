@@ -31,7 +31,7 @@ func CreateStroke(c *gin.Context) {
 		if err == gorm.ErrRecordNotFound {
 			// insert tourist
 			nowTime := time.Now().Format("2006-01-02 15:04:05")
-			err := mysql.InsertUserInfo(c, &mysql.UserInfo{
+			userInfo, err = mysql.InsertUserInfo(c, &mysql.UserInfo{
 				Token:      userToken,
 				UserName:   "",
 				PassWord:   "",
@@ -44,10 +44,6 @@ func CreateStroke(c *gin.Context) {
 				helper.FormatLogPrint(helper.ERROR, "CreateStroke InsertUserInfo failed, err: %v, userToken: %v", err, userToken)
 				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 				return
-			}
-			userInfo, err = mysql.GetUserInfoByToken(c, nil, userToken)
-			if err != nil {
-				helper.FormatLogPrint(helper.ERROR, "CreateStroke GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
 			}
 		} else {
 			helper.FormatLogPrint(helper.ERROR, "CreateStroke GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)

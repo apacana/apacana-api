@@ -33,6 +33,7 @@ const (
 
 	CodePointOutOfLimit = int32(4001)
 	CodePointExist      = int32(4002)
+	CodePointUsed       = int32(4003)
 )
 
 const (

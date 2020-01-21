@@ -65,8 +65,9 @@ func UpdateStrokeByID(c *gin.Context, tx *gorm.DB, id int64, attrs map[string]in
 	return r.Error
 }
 
-func InsertStrokeInfo(c *gin.Context, tx *gorm.DB, strokeInfo *StrokeInfo) error {
-	return Insert(tx, strokeInfo)
+func InsertStrokeInfo(c *gin.Context, tx *gorm.DB, strokeInfo *StrokeInfo) (*StrokeInfo, error) {
+	err := Insert(tx, strokeInfo)
+	return strokeInfo, err
 }
 
 func ChangeStrokeOwner(c *gin.Context, tx *gorm.DB, originalID int64, purposeID int64) error {

@@ -12,6 +12,13 @@ type AddRoutePointForm struct {
 	Direction     *string `json:"direction" binding:"omitempty"`
 }
 
+type RemoveRoutePointForm struct {
+	RouteToken    string  `json:"route_token" binding:"required"`
+	Index         *int    `json:"index" binding:"exists"`
+	DirectionType *string `json:"direction_type" binding:"omitempty"`
+	Direction     *string `json:"direction" binding:"omitempty"`
+}
+
 type CloseRouteForm struct {
 	RouteToken string `json:"route_token" binding:"required"`
 }

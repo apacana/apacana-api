@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"log"
+	"os"
 )
 
 var (
@@ -17,6 +18,7 @@ func InitMysql() {
 	DB, DBErr = gorm.Open("mysql", "root:@tcp(127.0.0.1:3306)/apacana")
 	if DBErr != nil {
 		log.Println("connect database fail:", DBErr)
+		os.Exit(1)
 		return
 	}
 	log.Println("connect database success")

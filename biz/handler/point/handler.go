@@ -35,7 +35,7 @@ func AddPoint(c *gin.Context) {
 		if err == gorm.ErrRecordNotFound {
 			// insert tourist
 			nowTime := time.Now().Format("2006-01-02 15:04:05")
-			err := mysql.InsertUserInfo(c, &mysql.UserInfo{
+			userInfo, err = mysql.InsertUserInfo(c, &mysql.UserInfo{
 				Token:      userToken,
 				UserName:   "",
 				PassWord:   "",
@@ -48,10 +48,6 @@ func AddPoint(c *gin.Context) {
 				helper.FormatLogPrint(helper.ERROR, "AddPoint InsertUserInfo failed, err: %v, userToken: %v", err, userToken)
 				helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 				return
-			}
-			userInfo, err = mysql.GetUserInfoByToken(c, nil, userToken)
-			if err != nil {
-				helper.FormatLogPrint(helper.ERROR, "AddPoint GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
 			}
 		} else {
 			helper.FormatLogPrint(helper.ERROR, "AddPoint GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
@@ -135,14 +131,6 @@ func DeletePoint(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
 		return
 	}
-	pointType, err := helper.GetPointTypeByName(deletePointForm.PointType)
-	if err != nil {
-		helper.FormatLogPrint(helper.WARNING, "DeletePoint GetPointTypeByName failed, err: %v", err)
-		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
-		return
-	}
-	helper.FormatLogPrint(helper.LOG, "DeletePoint from: %+v", deletePointForm)
-
 	// judge user
 	userToken := c.GetString(helper.UserToken)
 	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
@@ -165,7 +153,7 @@ func DeletePoint(c *gin.Context) {
 	}
 
 	// 存在校验
-	pointInfo, err := mysql.GetPointByPointID(c, nil, deletePointForm.PointID, pointType, userStrokeList.DefaultStroke)
+	pointInfo, err := mysql.GetPointByToken(c, nil, deletePointForm.PointToken)
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "DeletePoint GetPointByPointID failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
@@ -173,6 +161,10 @@ func DeletePoint(c *gin.Context) {
 	}
 	if pointInfo.Status == helper.PointDeleteStatus {
 		helper.FormatLogPrint(helper.WARNING, "DeletePoint pointInfo already deleted, pointToken: %v", pointInfo.PointToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	} else if pointInfo.StrokeID != userStrokeList.DefaultStroke {
+		helper.FormatLogPrint(helper.WARNING, "DeletePoint point not in default stroke")
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
@@ -187,9 +179,39 @@ func DeletePoint(c *gin.Context) {
 	strokeInfo := strokeInfos[0]
 	pointList, err := transform.StringToPointList(strokeInfo.PointsList)
 	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "AddPoint StringToPointList failed, pointList: %v", strokeInfo.PointsList)
+		helper.FormatLogPrint(helper.ERROR, "DeletePoint StringToPointList failed, err: %v", err)
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
+	}
+
+	// 路线点使用判断
+	routeList, err := transform.StringToRouteList(strokeInfo.RoutesList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "DeletePoint StringToRouteList failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	routes, err := mysql.MGetRouteByID(c, nil, routeList.RouteList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "DeletePoint MGetRouteByID failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	for _, route := range routes {
+		routePointList, err := transform.StringToRoutePointList(route.PointsList)
+		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "DeletePoint StringToRoutePointList failed, err: %v", err)
+			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+			return
+		}
+		for _, points := range routePointList.PointList {
+			if points == pointInfo.ID {
+				helper.BizResponse(c, http.StatusOK, helper.CodePointUsed, map[string]interface{}{
+					"route_name": route.RouteName,
+				})
+				return
+			}
+		}
 	}
 
 	// delete point

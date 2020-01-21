@@ -71,6 +71,7 @@ func UpdateDirectionByID(c *gin.Context, tx *gorm.DB, id int64, attrs map[string
 	return r.Error
 }
 
-func InsertRouteDirection(c *gin.Context, tx *gorm.DB, routeDirection *RouteDirection) error {
-	return Insert(tx, routeDirection)
+func InsertRouteDirection(c *gin.Context, tx *gorm.DB, routeDirection *RouteDirection) (*RouteDirection, error) {
+	err := Insert(tx, routeDirection)
+	return routeDirection, err
 }

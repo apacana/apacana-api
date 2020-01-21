@@ -25,7 +25,7 @@ func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *
 	// create route
 	nowTime = time.Now().Format("2006-01-02 15:04:05")
 	routeToken = helper.GenerateToken([]byte{'r', 'o', 'u', 't', 'e'}, "")
-	err = mysql.InsertRouteInfo(c, tx, &mysql.RouteInfo{
+	routeInfo, err := mysql.InsertRouteInfo(c, tx, &mysql.RouteInfo{
 		RouteToken: routeToken,
 		RouteName:  routeName,
 		RouteColor: routeColor,
@@ -37,11 +37,6 @@ func createStrokeRoute(c *gin.Context, strokeInfo *mysql.StrokeInfo, routeList *
 	})
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "createStrokeRoute InsertRouteInfo failed, err: %v", err)
-		return
-	}
-	routeInfo, err := mysql.GetRouteByToken(c, tx, routeToken)
-	if err != nil {
-		helper.FormatLogPrint(helper.ERROR, "createStrokeRoute GetRouteByToken failed, err: %v, routeToken: %v", err, routeToken)
 		return
 	}
 
@@ -87,7 +82,7 @@ func addRoutePoint(c *gin.Context, routeInfo *mysql.RouteInfo, pointInfo *mysql.
 			}
 		}
 		directToken := helper.GenerateToken([]byte{'d', 'i', 'r', 'e', 'c', 't'}, "")
-		err := mysql.InsertRouteDirection(c, tx, &mysql.RouteDirection{
+		directionInfo, err := mysql.InsertRouteDirection(c, tx, &mysql.RouteDirection{
 			DirectionToken: directToken,
 			DirectionType:  directionType,
 			Direction:      *addRoutePointForm.Direction,
@@ -99,12 +94,7 @@ func addRoutePoint(c *gin.Context, routeInfo *mysql.RouteInfo, pointInfo *mysql.
 		if err != nil {
 			helper.FormatLogPrint(helper.ERROR, "addRoutePoint InsertRouteDirection failed, err: %v", err)
 		} else {
-			directionInfo, err := mysql.GetDirectionByToken(c, tx, directToken)
-			if err != nil {
-				helper.FormatLogPrint(helper.ERROR, "addRoutePoint GetDirectionByToken failed, err: %v", err)
-			} else {
-				directionID = directionInfo.ID
-			}
+			directionID = directionInfo.ID
 		}
 	}
 	routePointList.DirectionList = append(routePointList.DirectionList, directionID)
@@ -122,6 +112,36 @@ func addRoutePoint(c *gin.Context, routeInfo *mysql.RouteInfo, pointInfo *mysql.
 	})
 	if err != nil {
 		helper.FormatLogPrint(helper.ERROR, "addRoutePoint UpdateStrokeByID failed, err: %v", err)
+		return
+	}
+
+	return
+}
+
+func updateRoute(c *gin.Context, nowTime string, routeInfo *mysql.RouteInfo, attrs map[string]interface{}) (err error) {
+	tx := mysql.DB.Begin()
+	defer func() {
+		if err == nil {
+			err = tx.Commit().Error
+		}
+		if err != nil {
+			if r := tx.Rollback(); r.Error != nil {
+				helper.FormatLogPrint(helper.ERROR, "addRoutePoint failed, err: %v", err)
+			}
+		}
+	}()
+
+	attrs["update_time"] = nowTime
+	err = mysql.UpdateRouteByToken(c, tx, routeInfo.RouteToken, attrs)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "updateRoute UpdateRouteByToken failed, err: %v", err)
+		return
+	}
+	err = mysql.UpdateStrokeByID(c, tx, routeInfo.StrokeID, map[string]interface{}{
+		"update_time": nowTime,
+	})
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "updateRoute UpdateStrokeByID failed, err: %v", err)
 		return
 	}
 

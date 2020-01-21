@@ -12,6 +12,5 @@ type AddPointForm struct {
 }
 
 type DeletePointForm struct {
-	PointID   string `json:"point_id" binding:"required"`
-	PointType string `json:"point_type" binding:"required"`
+	PointToken string `json:"point_token" binding:"required"`
 }

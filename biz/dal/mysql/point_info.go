@@ -94,8 +94,9 @@ func GetPointByPointID(c *gin.Context, tx *gorm.DB, pointID string, pointType Po
 	return nil, gorm.ErrRecordNotFound
 }
 
-func InsertPointInfo(c *gin.Context, tx *gorm.DB, pointInfo *PointInfo) error {
-	return Insert(tx, pointInfo)
+func InsertPointInfo(c *gin.Context, tx *gorm.DB, pointInfo *PointInfo) (*PointInfo, error) {
+	err := Insert(tx, pointInfo)
+	return pointInfo, err
 }
 
 func UpdatePointByID(c *gin.Context, tx *gorm.DB, pointID int64, attrs map[string]interface{}) error {

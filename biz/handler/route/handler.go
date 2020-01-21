@@ -167,6 +167,124 @@ func AddRoutePoint(c *gin.Context) {
 	})
 }
 
+func RemoveRoutePoint(c *gin.Context) {
+	var removeRoutePointForm RemoveRoutePointForm
+	if err := c.ShouldBindJSON(&removeRoutePointForm); err != nil {
+		helper.FormatLogPrint(helper.WARNING, "RemoveRoutePoint bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	} else if removeRoutePointForm.Index == nil {
+		helper.FormatLogPrint(helper.WARNING, "RemoveRoutePoint index is nil")
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "RemoveRoutePoint from: %+v", removeRoutePointForm)
+
+	// judge user
+	userToken := c.GetString(helper.UserToken)
+	userInfo, err := mysql.GetUserInfoByToken(c, nil, userToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "RemoveRoutePoint GetUserInfoByToken failed, err: %v, userToken: %v", err, userToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	if userInfo.Status == helper.TransferredStatus {
+		helper.FormatLogPrint(helper.WARNING, "RemoveRoutePoint Invalid User, token: %v", userInfo.Token)
+		helper.BizResponse(c, http.StatusOK, helper.CodeInvalidUser, nil)
+		return
+	}
+
+	// judge route
+	routeInfo, err := mysql.GetRouteByToken(c, nil, removeRoutePointForm.RouteToken)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "RemoveRoutePoint GetRouteByToken failed, err: %v, routeToken: %v", err, removeRoutePointForm.RouteToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if routeInfo.Status == helper.RouteDeleteStatus {
+		helper.FormatLogPrint(helper.LOG, "RemoveRoutePoint Route has deleted, routeToken: %v", removeRoutePointForm.RouteToken)
+		helper.BizResponse(c, http.StatusOK, helper.CodeMountDeleted, nil)
+		return
+	}
+
+	// route鉴权
+	if routeInfo.OwnerId != userInfo.ID {
+		helper.BizResponse(c, http.StatusOK, helper.CodeForbidden, nil)
+		return
+	}
+
+	// default stroke判断
+	strokeList, err := transform.StringToStrokeList(userInfo.Strokes)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "RemoveRoutePoint StringToStrokeList failed, strokes: %v", userInfo.Strokes)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if strokeList.DefaultStroke != routeInfo.StrokeID {
+		helper.FormatLogPrint(helper.WARNING, "RemoveRoutePoint want to change with not default stroke")
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	routePointList, err := transform.StringToRoutePointList(routeInfo.PointsList)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "AddRoutePoint StringToRoutePointList failed, routePointStr: %v", routeInfo.PointsList)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+	if *removeRoutePointForm.Index >= len(routePointList.PointList) {
+		helper.FormatLogPrint(helper.WARNING, "RemoveRoutePoint index out of limit, limit: %d, index: %d", len(routePointList.PointList), removeRoutePointForm.Index)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+
+	var directionID int64 = 0
+	nowTime := time.Now().Format("2006-01-02 15:04:05")
+	if removeRoutePointForm.Direction != nil && *removeRoutePointForm.Direction != "" {
+		directionType := mysql.DirectionType_DRIVINGTRAFFIC
+		if removeRoutePointForm.DirectionType != nil && *removeRoutePointForm.DirectionType != "" {
+			aDirectionType, err := helper.GetDirectionTypeByName(*removeRoutePointForm.DirectionType)
+			if err == nil {
+				directionType = aDirectionType
+			}
+		}
+		directToken := helper.GenerateToken([]byte{'d', 'i', 'r', 'e', 'c', 't'}, "")
+		directionInfo, err := mysql.InsertRouteDirection(c, nil, &mysql.RouteDirection{
+			DirectionToken: directToken,
+			DirectionType:  directionType,
+			Direction:      *removeRoutePointForm.Direction,
+			RouteID:        routeInfo.ID,
+			Version:        "v1",
+			CreateTime:     nowTime,
+			UpdateTime:     nowTime,
+		})
+		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "addRoutePoint InsertRouteDirection failed, err: %v", err)
+			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+			return
+		} else {
+			directionID = directionInfo.ID
+		}
+	}
+
+	// remove index
+	routePointList.RemoveIndex(*removeRoutePointForm.Index, directionID)
+
+	err = updateRoute(c, nowTime, routeInfo, map[string]interface{}{
+		"points_list": *transform.PackRoutePointList(routePointList),
+	})
+	if err != nil {
+		helper.FormatLogPrint(helper.WARNING, "RemoveRoutePoint removeRoutePoint failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
+
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
+		"update_time": nowTime,
+	})
+}
+
 func GetRoute(c *gin.Context) {
 	routeToken := c.Param("routeToken")
 	if routeToken == "" {

@@ -84,3 +84,25 @@ func CreateFmtRoutePointList(c *gin.Context, routePointStr string) ([]*out.Route
 
 	return routePointOut, nil
 }
+
+func (routePointList *RoutePointList) RemoveIndex(index int, directionID int64) {
+	// remove point list
+	if len(routePointList.PointList)-1 == index {
+		routePointList.PointList = routePointList.PointList[:index]
+	} else {
+		routePointList.PointList = append(routePointList.PointList[:index], routePointList.PointList[index+1:]...)
+	}
+
+	// remove direction list
+	if len(routePointList.DirectionList)-1 == index {
+		routePointList.DirectionList = routePointList.DirectionList[:index]
+	} else if index == 0 {
+		routePointList.DirectionList = routePointList.DirectionList[index+1:]
+		if len(routePointList.DirectionList) > 0 {
+			routePointList.DirectionList[0] = 0
+		}
+	} else {
+		routePointList.DirectionList[index+1] = directionID // 中间点，添加新行程记录
+		routePointList.DirectionList = append(routePointList.DirectionList[:index], routePointList.DirectionList[index+1:]...)
+	}
+}

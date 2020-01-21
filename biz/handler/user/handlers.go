@@ -57,11 +57,18 @@ func GetUserInfo(c *gin.Context) {
 		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
 		return
 	}
+	mapCenter, err := transform.StringToCenter(userInfo.Center)
+	if err != nil {
+		helper.FormatLogPrint(helper.ERROR, "GetUserInfo StringToCenter failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+		return
+	}
 
-	if userInfo.Status == 0 {
+	if userInfo.Status == helper.TouristStatus {
 		helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, map[string]interface{}{
 			"is_tourist":   true,
 			"strokes_info": strokeInfoList,
+			"map_center":   mapCenter,
 		})
 		return
 	}
@@ -73,6 +80,7 @@ func GetUserInfo(c *gin.Context) {
 			Status: userInfo.Status,
 		},
 		"strokes_info": strokeInfoList,
+		"map_center":   mapCenter,
 	})
 }
 
@@ -103,7 +111,7 @@ func RegisterUser(c *gin.Context) {
 			// insert
 			nowTime := time.Now().Format("2006-01-02 15:04:05")
 			passWord := helper.Md5(registerUserForm.PassWord)
-			err := mysql.InsertUserInfo(c, &mysql.UserInfo{
+			_, err := mysql.InsertUserInfo(c, &mysql.UserInfo{
 				Token:      userToken,
 				UserName:   registerUserForm.UserName,
 				PassWord:   passWord,
@@ -250,4 +258,31 @@ func LoginUser(c *gin.Context) {
 		},
 		"strokes_info": strokeInfoList,
 	})
+}
+
+func HeartUser(c *gin.Context) {
+	userToken := c.GetString(helper.UserToken)
+	var heartUserForm HeartUserForm
+	if err := c.ShouldBindJSON(&heartUserForm); err != nil {
+		helper.FormatLogPrint(helper.WARNING, "HeartUser bind json failed, err: %v", err)
+		helper.BizResponse(c, http.StatusOK, helper.CodeParmErr, nil)
+		return
+	}
+	helper.FormatLogPrint(helper.LOG, "HeartUser from: %+v", heartUserForm)
+
+	if heartUserForm.Latitude != nil && heartUserForm.Longitude != nil && heartUserForm.Zoom != nil {
+		err := mysql.UpdateUserInfoByToken(c, nil, userToken, map[string]interface{}{
+			"center": *transform.PackCenter(&transform.Center{
+				Latitude:  *heartUserForm.Latitude,
+				Longitude: *heartUserForm.Longitude,
+				Zoom:      *heartUserForm.Zoom,
+			}),
+		})
+		if err != nil {
+			helper.FormatLogPrint(helper.ERROR, "HeartUser UpdateUserInfoByToken failed, userToken: %v", userToken)
+			helper.BizResponse(c, http.StatusOK, helper.CodeFailed, nil)
+			return
+		}
+	}
+	helper.BizResponse(c, http.StatusOK, helper.CodeSuccess, nil)
 }

@@ -58,6 +58,7 @@ func UpdateRouteByToken(c *gin.Context, tx *gorm.DB, routeToken string, attrs ma
 	return r.Error
 }
 
-func InsertRouteInfo(c *gin.Context, tx *gorm.DB, routeInfo *RouteInfo) error {
-	return Insert(tx, routeInfo)
+func InsertRouteInfo(c *gin.Context, tx *gorm.DB, routeInfo *RouteInfo) (*RouteInfo, error) {
+	err := Insert(tx, routeInfo)
+	return routeInfo, err
 }

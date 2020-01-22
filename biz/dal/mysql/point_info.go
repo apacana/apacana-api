@@ -30,6 +30,7 @@ const (
 	PointType_UNKNOW      PointType = 0
 	PointType_SEARCH      PointType = 1
 	PointType_AGODA_HOTEL PointType = 2
+	PointType_YELP_FOOD   PointType = 3
 )
 
 const (

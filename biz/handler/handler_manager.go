@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/apacana/apacana-api/biz/handler/food"
 	"github.com/apacana/apacana-api/biz/handler/hotel"
 	"github.com/apacana/apacana-api/biz/handler/point"
 	"github.com/apacana/apacana-api/biz/handler/route"
@@ -29,6 +30,14 @@ func SetupRouter(r *gin.Engine) {
 				ApiHotelAgoda.POST("/get/", hotel.GetAgodaHotel)          // 获得agoda酒店数据
 				ApiHotelAgoda.POST("/search/", hotel.SearchHotel)         // 搜索agoda酒店数据
 				ApiHotelAgoda.POST("/booking/", hotel.SearchHotelBooking) // 搜索酒店预订信息
+			}
+		}
+		ApiFood := Api.Group("/food/")
+		{
+			ApiFoodYelp := ApiFood.Group("/yelp/")
+			{
+				ApiFoodYelp.GET("/:yelpToken/", food.GetYelpFood) // 获得yelp饭店数据
+				ApiFoodYelp.POST("/search/", food.SearchYelpFood) // 搜索yelp饭店数据
 			}
 		}
 		ApiStroke := Api.Group("/stroke/")

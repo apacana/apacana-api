@@ -10,6 +10,7 @@ import (
 var pointTypeByName = map[string]mysql.PointType{
 	"search_point": mysql.PointType_SEARCH,
 	"agoda_hotel":  mysql.PointType_AGODA_HOTEL,
+	"yelp_food":    mysql.PointType_YELP_FOOD,
 }
 
 var directionTypeByName = map[string]mysql.DirectionType{
